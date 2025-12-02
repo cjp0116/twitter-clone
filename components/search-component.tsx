@@ -20,7 +20,7 @@ interface SearchComponentProps {
   currentUser : any
 }
 
-export default function SearchComponent({ currentUserId, currentUser }: SearchComponentProps) {
+export function SearchComponent({ currentUserId, currentUser }: SearchComponentProps) {
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<SearchResult>({ tweets: [], users: [] })
   const [isSearching, setIsSearching] = useState(false)

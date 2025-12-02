@@ -3,9 +3,12 @@ import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
 import { TweetCard } from "@/components/tweet-card"
 import { AuthenticatedLayout } from "@/components/authenticated-layout"
-import { SidebarInset } from "@/components/ui/sidebar"
-import { Search } from "lucide-react"
 import { MainLayout } from "@/components/main-layout"
+import { SidebarInset } from "@/components/ui/sidebar"
+import { SearchComponent } from "@/components/search-component"
+import Link from "next/link"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+// import { UserCard } from "@/components/user-card"
 
 export default async function ExplorePage() {
   const supabase = await createClient()
@@ -33,17 +36,18 @@ export default async function ExplorePage() {
     .order("likes_count", { ascending: false })
     .limit(10)
 
+  const { data: suggestedUsers, error: usersError } = await supabase
+    .from("profiles")
+    .select("*")
+    .neq("id", user.id)
+    .order("followers_count", { ascending: false })
+    .limit(5)
+
   return (
     <AuthenticatedLayout user={user}>
       <SidebarInset>
         <MainLayout title="Explore" user={user}>
-          {/* Search */}
-          <div className="p-4 border-b border-border">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input placeholder="Search Twitter" className="pl-10 bg-muted/50 border-0 focus-visible:ring-1" />
-            </div>
-          </div>
+          <SearchComponent currentUserId={user.id} currentUser={user} />
 
           {/* Trending */}
           <div className="border-b border-border">
@@ -62,6 +66,34 @@ export default async function ExplorePage() {
               )}
             </div>
           </div>
+          {suggestedUsers && suggestedUsers.length > 0 && (
+            <div className="border-b border-border">
+              <div className="p-4">
+                <h2 className="text-lg font-semibold mb-4">Suggested users</h2>
+              </div>
+              <div className="divide-y divide-border">
+                {suggestedUsers.map((user) => (
+                  <Link key={user.id} href={`/profile/${user.username}`} className="flex items-center justify-between p-4 hover:bg-muted/50 transition-colors">
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                      <Avatar className="h-12 w-12">
+                        <AvatarImage src={user.avatar_url} />
+                        <AvatarFallback className="bg-primary text-primary-foreground">
+                          {user.display_name[0]?.toUpperCase() || 'U'}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold truncate">{user.display_name}</p>
+                        <p className="text-sm text-muted-foreground truncate">@{user.username}</p>
+                        {user.bio && (
+                          <p className="text-sm text-muted-foreground mt-1 line-clamp-1">{user.bio}</p>
+                        )}
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
         </MainLayout>
       </SidebarInset>
     </AuthenticatedLayout>

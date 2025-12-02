@@ -22,7 +22,7 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" className={`${geistSans} ${geistMono} antialiased`}>
+    <html lang="en" className={`${geistSans} ${geistMono} antialiased`} suppressHydrationWarning>
       <body>
         <Suspense fallback={<div>Loading...</div>}>
           <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
