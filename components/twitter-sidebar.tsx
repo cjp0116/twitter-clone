@@ -32,14 +32,15 @@ interface TwitterSidebarProps {
 
 export function TwitterSidebar({ user }: TwitterSidebarProps) {
   const pathname = usePathname()
-  const [unreadCount, setUnreadCount] = useState(0)
+  const [unreadNotificationsCount, setUnreadNotificationsCount] = useState(0)
+  const [unreadMessagesCount, setUnreadMessagesCount] = useState(0)
   const supabase = createClient()
 
   const navigationItems = [
     { icon: Home, label: "Home", href: "/" },
     { icon: Search, label: "Explore", href: "/explore" },
-    { icon: Bell, label: "Notifications", href: "/notifications", badge: unreadCount },
-    { icon: Mail, label: "Messages", href: "/messages" },
+    { icon: Bell, label: "Notifications", href: "/notifications", badge: unreadNotificationsCount },
+    { icon: Mail, label: "Messages", href: "/messages", badge: unreadMessagesCount },
     { icon: Bookmark, label: "Bookmarks", href: "/bookmarks" },
     { icon: User, label: "Profile", href: `/profile/${user.user_metadata?.username || user.id}` },
     { icon: Settings, label: "Settings", href: "/settings" },
@@ -47,7 +48,7 @@ export function TwitterSidebar({ user }: TwitterSidebarProps) {
 
   // Fetch unread notifications count
   useEffect(() => {
-    const fetchUnreadCount = async () => {
+    const fetchUnreadNotificationsCount = async () => {
       const { count, error } = await supabase
         .from("notifications")
         .select("*", { count: "exact", head: true })
@@ -55,11 +56,11 @@ export function TwitterSidebar({ user }: TwitterSidebarProps) {
         .eq("read", false)
 
       if (!error && count !== null) {
-        setUnreadCount(count)
+        setUnreadNotificationsCount(count)
       }
     }
 
-    fetchUnreadCount()
+    fetchUnreadNotificationsCount()
 
     // Subscribe to realtime changes
     const channel = supabase
@@ -73,7 +74,7 @@ export function TwitterSidebar({ user }: TwitterSidebarProps) {
           filter: `recipient_id=eq.${user.id}`,
         },
         () => {
-          setUnreadCount((prev) => prev + 1)
+          setUnreadNotificationsCount((prev) => prev + 1)
         },
       )
       .on(
@@ -87,12 +88,93 @@ export function TwitterSidebar({ user }: TwitterSidebarProps) {
         (payload) => {
           // If notification was marked as read, decrement count
           if (payload.new.read && !payload.old.read) {
-            setUnreadCount((prev) => Math.max(0, prev - 1))
+            setUnreadNotificationsCount((prev) => Math.max(0, prev - 1))
           }
           // If notification was marked as unread, increment count
           else if (!payload.new.read && payload.old.read) {
-            setUnreadCount((prev) => prev + 1)
+            setUnreadNotificationsCount((prev) => prev + 1)
           }
+        },
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [supabase, user.id])
+
+  // Fetch unread messages count
+  useEffect(() => {
+    const fetchUnreadMessagesCount = async () => {
+      // Get all conversations the user is part of
+      const { data: participantData } = await supabase
+        .from("conversation_participants")
+        .select("conversation_id, last_read_at")
+        .eq("user_id", user.id)
+
+      if (!participantData || participantData.length === 0) {
+        setUnreadMessagesCount(0)
+        return
+      }
+
+      // Count unread messages across all conversations
+      let totalUnread = 0
+      for (const participant of participantData) {
+        const lastReadAt = participant.last_read_at || new Date(0).toISOString()
+
+        const { count } = await supabase
+          .from("messages")
+          .select("*", { count: "exact", head: true })
+          .eq("conversation_id", participant.conversation_id)
+          .neq("sender_id", user.id)
+          .gt("created_at", lastReadAt)
+          .is("deleted_at", null)
+
+        totalUnread += count || 0
+      }
+
+      setUnreadMessagesCount(totalUnread)
+    }
+
+    fetchUnreadMessagesCount()
+
+    // Subscribe to realtime changes for new messages
+    const channel = supabase
+      .channel(`messages_count:${user.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "messages",
+        },
+        async (payload) => {
+          // Check if this message is in one of the user's conversations and not from them
+          if (payload.new.sender_id !== user.id) {
+            const { data: isParticipant } = await supabase
+              .from("conversation_participants")
+              .select("conversation_id")
+              .eq("conversation_id", payload.new.conversation_id)
+              .eq("user_id", user.id)
+              .single()
+
+            if (isParticipant) {
+              setUnreadMessagesCount((prev) => prev + 1)
+            }
+          }
+        },
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "conversation_participants",
+          filter: `user_id=eq.${user.id}`,
+        },
+        () => {
+          // When user reads messages (last_read_at updates), recalculate count
+          fetchUnreadMessagesCount()
         },
       )
       .subscribe()
