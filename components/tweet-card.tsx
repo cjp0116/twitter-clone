@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -13,6 +13,7 @@ import { RetweetButton } from "@/components/retweet-button"
 import { BookmarkButton } from "@/components/bookmark-button"
 import { EditTweetDialog } from "@/components/edit-tweet-dialog"
 import { DeleteTweetDialog } from "@/components/delete-tweet-dialog"
+import { TweetMediaGallery } from "@/components/tweet-media-gallery"
 import Link from "next/link"
 
 interface Tweet {
@@ -25,6 +26,8 @@ interface Tweet {
   author_id: string
   reply_to_id?: string
   retweet_of_id?: string
+  media_urls?: string[]
+  media_types?: string[]
   profiles: {
     username: string
     display_name: string
@@ -53,6 +56,26 @@ export function TweetCard({ tweet, currentUserId, currentUser, onUpdate }: Tweet
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const supabase = createClient()
+
+  // Load initial like state so we don't try to insert duplicate likes
+  useEffect(() => {
+    if (!currentUserId) return
+
+    const loadLikeState = async () => {
+      const { data, error } = await supabase
+        .from("likes")
+        .select("id")
+        .eq("user_id", currentUserId)
+        .eq("tweet_id", tweet.id)
+        .maybeSingle?.()
+
+      if (!error && data) {
+        setIsLiked(true)
+      }
+    }
+
+    void loadLikeState()
+  }, [currentUserId, supabase, tweet.id])
 
   const handleLike = async () => {
     if (!currentUserId || isLiking) return
@@ -156,6 +179,10 @@ export function TweetCard({ tweet, currentUserId, currentUser, onUpdate }: Tweet
 
               {tweet.content && <div className="text-foreground leading-relaxed">{tweet.content}</div>}
 
+              {tweet.media_urls && tweet.media_urls.length > 0 && (
+                <TweetMediaGallery mediaUrls={tweet.media_urls} mediaTypes={tweet.media_types || []} />
+              )}
+
               <div className="flex items-center justify-between max-w-md pt-2">
                 {currentUser && <ReplyDialog tweet={tweet} currentUser={currentUser} onReplyPosted={onUpdate} />}
                 <span className="text-sm text-muted-foreground ml-1">{tweet.replies_count}</span>
@@ -175,8 +202,8 @@ export function TweetCard({ tweet, currentUserId, currentUser, onUpdate }: Tweet
                   onClick={handleLike}
                   disabled={isLiking}
                   className={`h-8 px-2 ${isLiked
-                      ? "text-red-600 hover:text-red-700 hover:bg-red-600/10"
-                      : "text-muted-foreground hover:text-red-600 hover:bg-red-600/10"
+                    ? "text-red-600 hover:text-red-700 hover:bg-red-600/10"
+                    : "text-muted-foreground hover:text-red-600 hover:bg-red-600/10"
                     }`}
                 >
                   <Heart className={`h-4 w-4 mr-2 ${isLiked ? "fill-current" : ""}`} />

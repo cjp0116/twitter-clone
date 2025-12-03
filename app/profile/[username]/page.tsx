@@ -6,6 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { TweetCard } from "@/components/tweet-card"
 import { FollowButton } from "@/components/follow-button"
 import { EditProfileButton } from "@/components/edit-profile-button"
+import { ProfileContent } from "@/components/profile-content"
 import { AuthenticatedLayout } from "@/components/authenticated-layout"
 import { MainLayout } from "@/components/main-layout"
 import { SidebarInset, SidebarTrigger } from "@/components/ui/sidebar"
@@ -186,24 +187,14 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
             </div>
           </div>
 
-          {/* Tweets */}
+          {/* Tweets & Media Tabs */}
           <div className="border-t border-border">
-            <div className="p-4 border-b border-border">
-              <h3 className="font-semibold">Tweets</h3>
-            </div>
-
-            <div className="divide-y divide-border">
-              {tweets && tweets.length > 0 ? (
-                tweets.map((tweet) => <TweetCard key={tweet.id} tweet={tweet} currentUserId={user.id} />)
-              ) : (
-                <div className="p-8 text-center text-muted-foreground">
-                  <p className="text-lg mb-2">No tweets yet</p>
-                  <p className="text-sm">
-                    {isOwnProfile ? "Share your first thought!" : `@${profile.username} hasn't tweeted yet.`}
-                  </p>
-                </div>
-              )}
-            </div>
+            <ProfileContent
+              tweets={tweets || []}
+              currentUserId={user.id}
+              isOwnProfile={isOwnProfile}
+              username={profile.username}
+            />
           </div>
         </MainLayout>
       </SidebarInset>

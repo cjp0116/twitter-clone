@@ -36,7 +36,10 @@ export function SearchComponent({ currentUserId, currentUser }: SearchComponentP
     setIsSearching(true)
     setHasSearched(true)
     try {
-      const { data: tweets, error: tweetsError } = await supabase.from('tweets').select(`*, profiles (username, display_name, avatar_url)`).ilike(`content`, `%${searchQuery}%`)
+      const { data: tweets, error: tweetsError } = await supabase.from('tweets').select(`
+        *,
+        profiles (username, display_name, avatar_url)
+      `).ilike(`content`, `%${searchQuery}%`)
         .order(`created_at`, { ascending: false })
         .limit(20)
       

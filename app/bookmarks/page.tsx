@@ -32,6 +32,8 @@ export default async function BookmarksPage() {
         author_id,
         reply_to_id,
         retweet_of_id,
+        media_urls,
+        media_types,
         profiles (
           username,
           display_name,
@@ -41,7 +43,7 @@ export default async function BookmarksPage() {
     `)
     .eq("user_id", user.id)
     .order("created_at", { ascending: false })
-
+  
   if (bookmarksError) {
     console.error("Error fetching bookmarks:", bookmarksError)
   }

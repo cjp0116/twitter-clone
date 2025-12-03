@@ -20,14 +20,14 @@ export function BookmarkButton({ tweetId, currentUserId, onUpdate }: BookmarkBut
   useEffect(() => {
     const checkBookmark = async () => {
       const client = createClient()
-      const { data } = await client
+      const { data, error } = await client
         .from("bookmarks")
         .select("id")
         .eq("user_id", currentUserId)
         .eq("tweet_id", tweetId)
-        .single()
+        .maybeSingle()
 
-      if (data) {
+      if (!error && data) {
         setIsBookmarked(true)
       }
     }
@@ -80,8 +80,8 @@ export function BookmarkButton({ tweetId, currentUserId, onUpdate }: BookmarkBut
       onClick={handleBookmark}
       disabled={isBookmarking}
       className={`h-8 px-2 ${isBookmarked
-          ? "text-blue-600 hover:text-blue-700 hover:bg-blue-600/10"
-          : "text-muted-foreground hover:text-blue-600 hover:bg-blue-600/10"
+        ? "text-blue-600 hover:text-blue-700 hover:bg-blue-600/10"
+        : "text-muted-foreground hover:text-blue-600 hover:bg-blue-600/10"
         }`}
     >
       <Bookmark className={`h-4 w-4 ${isBookmarked ? "fill-current" : ""}`} />
