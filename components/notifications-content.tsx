@@ -11,7 +11,7 @@ interface Notification {
   id: string
   type: "follow" | "like" | "reply" | "retweet"
   actor_id: string
-  recipient_id: string
+  user_id: string
   tweet_id?: string
   read: boolean
   created_at: string
@@ -53,7 +53,7 @@ export function NotificationsContent({ user }: NotificationsContentProps) {
           event: "INSERT",
           schema: "public",
           table: "notifications",
-          filter: `recipient_id=eq.${user.id}`,
+          filter: `user_id=eq.${user.id}`,
         },
         async (payload) => {
           // Fetch the complete notification with related data
@@ -81,7 +81,7 @@ export function NotificationsContent({ user }: NotificationsContentProps) {
           event: "UPDATE",
           schema: "public",
           table: "notifications",
-          filter: `recipient_id=eq.${user.id}`,
+          filter: `user_id=eq.${user.id}`,
         },
         (payload) => {
           // Update the notification in the list (e.g., when marked as read)
@@ -107,10 +107,11 @@ export function NotificationsContent({ user }: NotificationsContentProps) {
         actor_profile:profiles!notifications_actor_id_fkey(display_name, username, avatar_url),
         tweet:tweets(content)
       `)
-      .eq("recipient_id", user.id)
+      .eq("user_id", user.id)
       .order("created_at", { ascending: false })
 
     if (activeTab === "mentions") {
+      // Mentions and replies are both modeled as "reply" notifications
       query = query.eq("type", "reply")
     }
 
@@ -149,7 +150,7 @@ export function NotificationsContent({ user }: NotificationsContentProps) {
       case "like":
         return `${actorName} liked your post`
       case "reply":
-        return `${actorName} replied to your post`
+        return `${actorName} replied to or mentioned you`
       case "retweet":
         return `${actorName} retweeted your post`
       default:
@@ -162,7 +163,7 @@ export function NotificationsContent({ user }: NotificationsContentProps) {
       .from("notifications")
       .update({ read: true })
       .eq("id", notificationId)
-      .eq("recipient_id", user.id)
+      .eq("user_id", user.id)
 
     if (error) {
       console.error("Error marking notification as read:", error)
@@ -173,7 +174,7 @@ export function NotificationsContent({ user }: NotificationsContentProps) {
     const { error } = await supabase
       .from("notifications")
       .update({ read: true })
-      .eq("recipient_id", user.id)
+      .eq("user_id", user.id)
       .eq("read", false)
 
     if (error) {
@@ -203,18 +204,16 @@ export function NotificationsContent({ user }: NotificationsContentProps) {
         <div className="flex mt-4 border-b border-gray-800">
           <button
             onClick={() => setActiveTab("all")}
-            className={`px-4 py-3 font-medium transition-colors relative ${
-              activeTab === "all" ? "text-white" : "text-gray-500 hover:text-gray-300"
-            }`}
+            className={`px-4 py-3 font-medium transition-colors relative ${activeTab === "all" ? "text-white" : "text-gray-500 hover:text-gray-300"
+              }`}
           >
             All
             {activeTab === "all" && <div className="absolute bottom-0 left-0 right-0 h-1 bg-blue-500 rounded-full" />}
           </button>
           <button
             onClick={() => setActiveTab("verified")}
-            className={`px-4 py-3 font-medium transition-colors relative ${
-              activeTab === "verified" ? "text-white" : "text-gray-500 hover:text-gray-300"
-            }`}
+            className={`px-4 py-3 font-medium transition-colors relative ${activeTab === "verified" ? "text-white" : "text-gray-500 hover:text-gray-300"
+              }`}
           >
             Verified
             {activeTab === "verified" && (
@@ -223,9 +222,8 @@ export function NotificationsContent({ user }: NotificationsContentProps) {
           </button>
           <button
             onClick={() => setActiveTab("mentions")}
-            className={`px-4 py-3 font-medium transition-colors relative ${
-              activeTab === "mentions" ? "text-white" : "text-gray-500 hover:text-gray-300"
-            }`}
+            className={`px-4 py-3 font-medium transition-colors relative ${activeTab === "mentions" ? "text-white" : "text-gray-500 hover:text-gray-300"
+              }`}
           >
             Mentions
             {activeTab === "mentions" && (
@@ -247,9 +245,8 @@ export function NotificationsContent({ user }: NotificationsContentProps) {
           notifications.map((notification) => (
             <div
               key={notification.id}
-              className={`p-4 hover:bg-gray-900/50 transition-colors cursor-pointer ${
-                !notification.read ? "bg-blue-500/5 border-l-2 border-blue-500" : ""
-              }`}
+              className={`p-4 hover:bg-gray-900/50 transition-colors cursor-pointer ${!notification.read ? "bg-blue-500/5 border-l-2 border-blue-500" : ""
+                }`}
               onClick={() => !notification.read && markAsRead(notification.id)}
             >
               <div className="flex gap-3">

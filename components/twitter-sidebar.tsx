@@ -52,7 +52,7 @@ export function TwitterSidebar({ user }: TwitterSidebarProps) {
       const { count, error } = await supabase
         .from("notifications")
         .select("*", { count: "exact", head: true })
-        .eq("recipient_id", user.id)
+        .eq("user_id", user.id)
         .eq("read", false)
 
       if (!error && count !== null) {
@@ -71,7 +71,7 @@ export function TwitterSidebar({ user }: TwitterSidebarProps) {
           event: "INSERT",
           schema: "public",
           table: "notifications",
-          filter: `recipient_id=eq.${user.id}`,
+          filter: `user_id=eq.${user.id}`,
         },
         () => {
           setUnreadNotificationsCount((prev) => prev + 1)
@@ -83,7 +83,7 @@ export function TwitterSidebar({ user }: TwitterSidebarProps) {
           event: "UPDATE",
           schema: "public",
           table: "notifications",
-          filter: `recipient_id=eq.${user.id}`,
+          filter: `user_id=eq.${user.id}`,
         },
         (payload) => {
           // If notification was marked as read, decrement count

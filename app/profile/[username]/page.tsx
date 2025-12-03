@@ -82,8 +82,8 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
     notFound()
   }
 
-  // Fetch user's tweets
-  const { data: tweets, error: tweetsError } = await supabase
+  // Fetch user's own tweets
+  const { data: ownTweets, error: tweetsError } = await supabase
     .from("tweets")
     .select(`
       *,
@@ -100,6 +100,40 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
   if (tweetsError) {
     console.error("Error fetching tweets:", tweetsError)
   }
+
+  // Fetch tweets where this user is mentioned
+  const { data: mentionedTweets, error: mentionedError } = await supabase
+    .from("tweets")
+    .select(`
+      *,
+      profiles (
+        username,
+        display_name,
+        avatar_url
+      ),
+      tweet_mentions!inner (
+        mentioned_user_id
+      )
+    `)
+    .eq("tweet_mentions.mentioned_user_id", profile.id)
+    .order("created_at", { ascending: false })
+    .limit(20)
+
+  if (mentionedError) {
+    console.error("Error fetching mentioned tweets:", mentionedError)
+  }
+
+  // Combine and dedupe tweets (authored + mentioned)
+  const tweetsMap = new Map<string, any>()
+  for (const t of ownTweets || []) {
+    tweetsMap.set(t.id, t)
+  }
+  for (const t of mentionedTweets || []) {
+    tweetsMap.set(t.id, t)
+  }
+  const combinedTweets = Array.from(tweetsMap.values()).sort(
+    (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+  )
 
   // Check if current user follows this profile
   const { data: followData } = await supabase
@@ -128,7 +162,7 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
               <div>
                 <h1 className="text-xl font-bold">{profile.display_name}</h1>
                 <p className="text-sm text-muted-foreground">
-                  {tweets?.length || 0} tweet{tweets?.length !== 1 ? "s" : ""}
+                  {combinedTweets.length || 0} tweet{combinedTweets.length !== 1 ? "s" : ""}
                 </p>
               </div>
             </CardHeader>
@@ -190,7 +224,7 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
           {/* Tweets & Media Tabs */}
           <div className="border-t border-border">
             <ProfileContent
-              tweets={tweets || []}
+              tweets={combinedTweets}
               currentUserId={user.id}
               isOwnProfile={isOwnProfile}
               username={profile.username}

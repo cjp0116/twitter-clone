@@ -65,7 +65,7 @@ export function SidebarNavigation({ user }: SidebarNavigationProps) {
       <Button className="w-full h-12 text-lg font-semibold rounded-full">Tweet</Button>
 
       {/* User profile */}
-      <Card className="mt-auto">
+      {/* <Card className="mt-auto">
         <CardContent className="p-3">
           <div className="flex items-center justify-between">
             <Link
@@ -84,6 +84,25 @@ export function SidebarNavigation({ user }: SidebarNavigationProps) {
               <div className="flex-1 min-w-0">
                 <p className="font-semibold text-sm truncate">{user.user_metadata?.display_name || "User"}</p>
                 <p className="text-muted-foreground text-sm truncate">@{user.user_metadata?.username || "username"}</p>
+              </div>
+            </Link>
+            <LogoutButton variant="ghost" size="sm" />
+          </div>
+        </CardContent>
+      </Card> */}
+      <Card className="mt-auto">
+        <CardContent className="p-3">
+          <div className="flex items-center justify-between">
+            <Link href={`/profile/${username}`} className="flex items-center gap-3 flex-1 min-w-0">
+              <Avatar className="h-10 w-10">
+                <AvatarImage src={profile?.avatar_url || "/placeholder.svg"} />
+                <AvatarFallback className="bg-primary text-primary-foreground">
+                  {displayName[0]?.toUpperCase() || "U"}
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold text-sm truncate">{displayName}</p>
+                <p className="text-muted-foreground text-sm truncate">@{username}</p>
               </div>
             </Link>
             <LogoutButton variant="ghost" size="sm" />

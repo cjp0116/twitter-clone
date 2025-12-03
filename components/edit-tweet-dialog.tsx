@@ -38,6 +38,16 @@ export function EditTweetDialog({ tweet, currentUser, isOpen, onOpenChange, onTw
   const [error, setError] = useState<string | null>(null)
   const supabase = createClient()
 
+  const extractUsernamesFromContent = (text: string): string[] => {
+    const regex = /@([A-Za-z0-9_]+)/g
+    const usernames = new Set<string>()
+    let match
+    while ((match = regex.exec(text)) !== null) {
+      usernames.add(match[1])
+    }
+    return Array.from(usernames)
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!content.trim() || content.length > 280) return
@@ -46,7 +56,7 @@ export function EditTweetDialog({ tweet, currentUser, isOpen, onOpenChange, onTw
     setError(null)
 
     try {
-      const { error } = await supabase
+      const { data: updatedTweets, error } = await supabase
         .from("tweets")
         .update({
           content: content.trim(),
@@ -56,6 +66,32 @@ export function EditTweetDialog({ tweet, currentUser, isOpen, onOpenChange, onTw
         .eq("author_id", currentUser.id) // Ensure only owner can update
 
       if (error) throw error
+
+      // Rebuild mentions for this tweet
+      await supabase.from("tweet_mentions").delete().eq("tweet_id", tweet.id)
+
+      const updatedTweet = updatedTweets?.[0] ?? { id: tweet.id, content: content.trim() }
+      const usernames = extractUsernamesFromContent(updatedTweet.content)
+
+      if (usernames.length > 0) {
+        const { data: mentionedProfiles, error: profilesError } = await supabase
+          .from("profiles")
+          .select("id, username")
+          .in("username", usernames)
+
+        if (!profilesError && mentionedProfiles && mentionedProfiles.length > 0) {
+          const rows = mentionedProfiles
+            .filter((p) => p.id !== currentUser.id)
+            .map((p) => ({
+              tweet_id: updatedTweet.id,
+              mentioned_user_id: p.id,
+            }))
+
+          if (rows.length > 0) {
+            await supabase.from("tweet_mentions").insert(rows)
+          }
+        }
+      }
 
       onOpenChange(false)
       onTweetUpdated?.()

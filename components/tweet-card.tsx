@@ -113,6 +113,40 @@ export function TweetCard({ tweet, currentUserId, currentUser, onUpdate }: Tweet
   const isOwner = currentUserId === tweet.author_id
   const isRetweet = !!tweet.retweet_of_id
 
+  const renderContent = (text: string) => {
+    const parts = text.split(/(\s+)/)
+
+    return parts.map((part, index) => {
+      if (/^#[A-Za-z0-9_]+$/.test(part)) {
+        const tag = part.slice(1)
+        return (
+          <Link
+            key={`${part}-${index}`}
+            href={`/explore?tag=${encodeURIComponent(tag)}`}
+            className="text-sky-500 hover:underline"
+          >
+            {part}
+          </Link>
+        )
+      }
+
+      if (/^@[A-Za-z0-9_]+$/.test(part)) {
+        const username = part.slice(1)
+        return (
+          <Link
+            key={`${part}-${index}`}
+            href={`/profile/${encodeURIComponent(username)}`}
+            className="text-sky-500 hover:underline"
+          >
+            {part}
+          </Link>
+        )
+      }
+
+      return <span key={`${part}-${index}`}>{part}</span>
+    })
+  }
+
   return (
     <>
       <Card className="border-0 border-b rounded-none hover:bg-muted/30 transition-colors">
@@ -177,7 +211,7 @@ export function TweetCard({ tweet, currentUserId, currentUser, onUpdate }: Tweet
                 </div>
               </div>
 
-              {tweet.content && <div className="text-foreground leading-relaxed">{tweet.content}</div>}
+              {tweet.content && <div className="text-foreground leading-relaxed break-words">{renderContent(tweet.content)}</div>}
 
               {tweet.media_urls && tweet.media_urls.length > 0 && (
                 <TweetMediaGallery mediaUrls={tweet.media_urls} mediaTypes={tweet.media_types || []} />

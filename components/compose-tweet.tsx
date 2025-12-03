@@ -38,6 +38,16 @@ export function ComposeTweet({ user, onTweetPosted }: ComposeTweetProps) {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const supabase = createClient()
 
+  const extractUsernamesFromContent = (text: string): string[] => {
+    const regex = /@([A-Za-z0-9_]+)/g
+    const usernames = new Set<string>()
+    let match
+    while ((match = regex.exec(text)) !== null) {
+      usernames.add(match[1])
+    }
+    return Array.from(usernames)
+  }
+
   useEffect(() => {
     const fetchProfile = async () => {
       try {
@@ -169,14 +179,43 @@ export function ComposeTweet({ user, onTweetPosted }: ComposeTweetProps) {
       // Upload media first if any
       const { urls: mediaUrls, types: mediaTypes } = await uploadMedia()
 
-      const { error } = await supabase.from("tweets").insert({
-        content: content.trim() || null,
-        author_id: profile.id,
-        media_urls: mediaUrls,
-        media_types: mediaTypes,
-      })
+      const { data: insertedTweets, error } = await supabase
+        .from("tweets")
+        .insert({
+          content: content.trim() || null,
+          author_id: profile.id,
+          media_urls: mediaUrls,
+          media_types: mediaTypes,
+        })
+        .select("id, content")
 
       if (error) throw error
+
+      const insertedTweet = insertedTweets?.[0]
+
+      // Handle mentions after tweet creation
+      if (insertedTweet && insertedTweet.content) {
+        const usernames = extractUsernamesFromContent(insertedTweet.content)
+        if (usernames.length > 0) {
+          const { data: mentionedProfiles, error: profilesError } = await supabase
+            .from("profiles")
+            .select("id, username")
+            .in("username", usernames)
+
+          if (!profilesError && mentionedProfiles && mentionedProfiles.length > 0) {
+            const rows = mentionedProfiles
+              .filter((p) => p.id !== profile.id)
+              .map((p) => ({
+                tweet_id: insertedTweet.id,
+                mentioned_user_id: p.id,
+              }))
+
+            if (rows.length > 0) {
+              await supabase.from("tweet_mentions").insert(rows)
+            }
+          }
+        }
+      }
 
       setContent("")
       setMediaFiles([])
@@ -240,9 +279,8 @@ export function ComposeTweet({ user, onTweetPosted }: ComposeTweetProps) {
                   {mediaFiles.map((media, index) => (
                     <div
                       key={index}
-                      className={`relative group ${
-                        mediaFiles.length === 3 && index === 0 ? "row-span-2" : ""
-                      } bg-gray-900 rounded-xl overflow-hidden`}
+                      className={`relative group ${mediaFiles.length === 3 && index === 0 ? "row-span-2" : ""
+                        } bg-gray-900 rounded-xl overflow-hidden`}
                       style={{ minHeight: mediaFiles.length === 1 ? "300px" : "150px" }}
                     >
                       {media.type === "video" ? (

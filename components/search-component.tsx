@@ -17,7 +17,7 @@ interface SearchResult {
 
 interface SearchComponentProps {
   currentUserId: string
-  currentUser : any
+  currentUser: any
 }
 
 export function SearchComponent({ currentUserId, currentUser }: SearchComponentProps) {
@@ -36,23 +36,30 @@ export function SearchComponent({ currentUserId, currentUser }: SearchComponentP
     setIsSearching(true)
     setHasSearched(true)
     try {
+      const isHashtagSearch = searchQuery.trim().startsWith('#')
+      const tweetSearchTerm = isHashtagSearch ? searchQuery.trim() : `%${searchQuery}%`
+
       const { data: tweets, error: tweetsError } = await supabase.from('tweets').select(`
         *,
         profiles (username, display_name, avatar_url)
-      `).ilike(`content`, `%${searchQuery}%`)
+      `).ilike(`content`, isHashtagSearch ? `${tweetSearchTerm}` : tweetSearchTerm)
         .order(`created_at`, { ascending: false })
         .limit(20)
-      
-      const { data: users, error: usersError } = await supabase
-        .from('profiles')
-        .select('*')
-        .or(`username.ilike.%${searchQuery}%,display_name.ilike.%${searchQuery}%,bio.ilike.%${searchQuery}%`)
-        .limit(10)
-      
+
+      let users: any[] = []
+      if (!isHashtagSearch) {
+        const usersResult = await supabase
+          .from('profiles')
+          .select('*')
+          .or(`username.ilike.%${searchQuery}%,display_name.ilike.%${searchQuery}%,bio.ilike.%${searchQuery}%`)
+          .limit(10)
+        users = usersResult.data || []
+        if (usersResult.error) throw usersResult.error
+      }
+
       if (tweetsError) throw tweetsError;
-      if (usersError) throw usersError;
-      
-      setResults({ tweets: tweets || [], users: users || [] })
+
+      setResults({ tweets: tweets || [], users })
 
     } catch (error) {
       console.error('Search error:', error);
