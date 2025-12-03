@@ -10,6 +10,7 @@ import { Heart, Share, MoreHorizontal, Repeat2, Edit, Trash2 } from "lucide-reac
 import { formatDistanceToNow } from "date-fns"
 import { ReplyDialog } from "@/components/reply-dialog"
 import { RetweetButton } from "@/components/retweet-button"
+import { BookmarkButton } from "@/components/bookmark-button"
 import { EditTweetDialog } from "@/components/edit-tweet-dialog"
 import { DeleteTweetDialog } from "@/components/delete-tweet-dialog"
 import Link from "next/link"
@@ -173,11 +174,10 @@ export function TweetCard({ tweet, currentUserId, currentUser, onUpdate }: Tweet
                   size="sm"
                   onClick={handleLike}
                   disabled={isLiking}
-                  className={`h-8 px-2 ${
-                    isLiked
+                  className={`h-8 px-2 ${isLiked
                       ? "text-red-600 hover:text-red-700 hover:bg-red-600/10"
                       : "text-muted-foreground hover:text-red-600 hover:bg-red-600/10"
-                  }`}
+                    }`}
                 >
                   <Heart className={`h-4 w-4 mr-2 ${isLiked ? "fill-current" : ""}`} />
                   <span className="text-sm">{likesCount}</span>
@@ -190,6 +190,10 @@ export function TweetCard({ tweet, currentUserId, currentUser, onUpdate }: Tweet
                 >
                   <Share className="h-4 w-4" />
                 </Button>
+
+                {currentUserId && (
+                  <BookmarkButton tweetId={tweet.id} currentUserId={currentUserId} onUpdate={onUpdate} />
+                )}
               </div>
             </div>
           </div>

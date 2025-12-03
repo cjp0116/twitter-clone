@@ -1,11 +1,13 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Home, Search, Bell, Mail, Bookmark, User, Settings } from "lucide-react"
 import { LogoutButton } from "@/components/logout-button"
+import { createClient } from "@/lib/supabase/client"
 import {
   Sidebar,
   SidebarContent,
@@ -30,16 +32,75 @@ interface TwitterSidebarProps {
 
 export function TwitterSidebar({ user }: TwitterSidebarProps) {
   const pathname = usePathname()
+  const [unreadCount, setUnreadCount] = useState(0)
+  const supabase = createClient()
 
   const navigationItems = [
     { icon: Home, label: "Home", href: "/" },
     { icon: Search, label: "Explore", href: "/explore" },
-    { icon: Bell, label: "Notifications", href: "/notifications" },
+    { icon: Bell, label: "Notifications", href: "/notifications", badge: unreadCount },
     { icon: Mail, label: "Messages", href: "/messages" },
     { icon: Bookmark, label: "Bookmarks", href: "/bookmarks" },
     { icon: User, label: "Profile", href: `/profile/${user.user_metadata?.username || user.id}` },
     { icon: Settings, label: "Settings", href: "/settings" },
   ]
+
+  // Fetch unread notifications count
+  useEffect(() => {
+    const fetchUnreadCount = async () => {
+      const { count, error } = await supabase
+        .from("notifications")
+        .select("*", { count: "exact", head: true })
+        .eq("recipient_id", user.id)
+        .eq("read", false)
+
+      if (!error && count !== null) {
+        setUnreadCount(count)
+      }
+    }
+
+    fetchUnreadCount()
+
+    // Subscribe to realtime changes
+    const channel = supabase
+      .channel(`notifications_count:${user.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "notifications",
+          filter: `recipient_id=eq.${user.id}`,
+        },
+        () => {
+          setUnreadCount((prev) => prev + 1)
+        },
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "notifications",
+          filter: `recipient_id=eq.${user.id}`,
+        },
+        (payload) => {
+          // If notification was marked as read, decrement count
+          if (payload.new.read && !payload.old.read) {
+            setUnreadCount((prev) => Math.max(0, prev - 1))
+          }
+          // If notification was marked as unread, increment count
+          else if (!payload.new.read && payload.old.read) {
+            setUnreadCount((prev) => prev + 1)
+          }
+        },
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [supabase, user.id])
 
   return (
     <Sidebar collapsible="icon">
@@ -57,13 +118,19 @@ export function TwitterSidebar({ user }: TwitterSidebarProps) {
           {navigationItems.map((item) => {
             const Icon = item.icon
             const isActive = pathname === item.href
+            const showBadge = item.badge !== undefined && item.badge > 0
 
             return (
               <SidebarMenuItem key={item.href}>
                 <SidebarMenuButton asChild isActive={isActive} size="lg" tooltip={item.label}>
-                  <Link href={item.href}>
+                  <Link href={item.href} className="relative">
                     <Icon className="h-6 w-6" />
                     <span>{item.label}</span>
+                    {showBadge && (
+                      <span className="absolute -top-1 left-3 bg-blue-500 text-white text-xs font-bold rounded-full min-w-[20px] h-5 flex items-center justify-center px-1.5">
+                        {item.badge > 99 ? "99+" : item.badge}
+                      </span>
+                    )}
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>

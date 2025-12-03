@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { createBrowserClient } from "@supabase/ssr"
+import { createClient } from "@/lib/supabase/client"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Settings, Heart, UserPlus, Sparkles, AtSign } from "lucide-react"
@@ -9,7 +9,7 @@ import { formatDistanceToNow } from "date-fns"
 
 interface Notification {
   id: string
-  type: "follow" | "like" | "mention"
+  type: "follow" | "like" | "reply" | "retweet"
   actor_id: string
   recipient_id: string
   tweet_id?: string
@@ -37,14 +37,65 @@ export function NotificationsContent({ user }: NotificationsContentProps) {
   const [activeTab, setActiveTab] = useState<"all" | "verified" | "mentions">("all")
   const [loading, setLoading] = useState(true)
 
-  const supabase = createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-  )
+  const supabase = createClient()
 
   useEffect(() => {
     fetchNotifications()
   }, [activeTab])
+
+  // Realtime subscription for new notifications
+  useEffect(() => {
+    const channel = supabase
+      .channel(`notifications:${user.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "notifications",
+          filter: `recipient_id=eq.${user.id}`,
+        },
+        async (payload) => {
+          // Fetch the complete notification with related data
+          const { data: newNotification, error } = await supabase
+            .from("notifications")
+            .select(`
+              *,
+              actor_profile:profiles!notifications_actor_id_fkey(display_name, username, avatar_url),
+              tweet:tweets(content)
+            `)
+            .eq("id", payload.new.id)
+            .single()
+
+          if (!error && newNotification) {
+            // Only add if it matches the current tab filter
+            if (activeTab === "all" || (activeTab === "mentions" && newNotification.type === "reply")) {
+              setNotifications((prev) => [newNotification, ...prev])
+            }
+          }
+        },
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "notifications",
+          filter: `recipient_id=eq.${user.id}`,
+        },
+        (payload) => {
+          // Update the notification in the list (e.g., when marked as read)
+          setNotifications((prev) =>
+            prev.map((notif) => (notif.id === payload.new.id ? { ...notif, ...payload.new } : notif)),
+          )
+        },
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [supabase, user.id, activeTab])
 
   const fetchNotifications = async () => {
     setLoading(true)
@@ -60,7 +111,7 @@ export function NotificationsContent({ user }: NotificationsContentProps) {
       .order("created_at", { ascending: false })
 
     if (activeTab === "mentions") {
-      query = query.eq("type", "mention")
+      query = query.eq("type", "reply")
     }
 
     const { data, error } = await query
@@ -80,8 +131,10 @@ export function NotificationsContent({ user }: NotificationsContentProps) {
         return <UserPlus className="w-8 h-8 text-blue-500" />
       case "like":
         return <Heart className="w-8 h-8 text-red-500" />
-      case "mention":
+      case "reply":
         return <AtSign className="w-8 h-8 text-blue-500" />
+      case "retweet":
+        return <Sparkles className="w-8 h-8 text-green-500" />
       default:
         return <Sparkles className="w-8 h-8 text-purple-500" />
     }
@@ -95,10 +148,36 @@ export function NotificationsContent({ user }: NotificationsContentProps) {
         return `${actorName} followed you`
       case "like":
         return `${actorName} liked your post`
-      case "mention":
-        return `${actorName} mentioned you`
+      case "reply":
+        return `${actorName} replied to your post`
+      case "retweet":
+        return `${actorName} retweeted your post`
       default:
         return `${actorName} interacted with your content`
+    }
+  }
+
+  const markAsRead = async (notificationId: string) => {
+    const { error } = await supabase
+      .from("notifications")
+      .update({ read: true })
+      .eq("id", notificationId)
+      .eq("recipient_id", user.id)
+
+    if (error) {
+      console.error("Error marking notification as read:", error)
+    }
+  }
+
+  const markAllAsRead = async () => {
+    const { error } = await supabase
+      .from("notifications")
+      .update({ read: true })
+      .eq("recipient_id", user.id)
+      .eq("read", false)
+
+    if (error) {
+      console.error("Error marking all notifications as read:", error)
     }
   }
 
@@ -108,9 +187,16 @@ export function NotificationsContent({ user }: NotificationsContentProps) {
       <div className="sticky top-0 bg-black/80 backdrop-blur-md border-b border-gray-800 p-4">
         <div className="flex items-center justify-between">
           <h1 className="text-xl font-bold">Notifications</h1>
-          <Button variant="ghost" size="icon">
-            <Settings className="w-5 h-5" />
-          </Button>
+          <div className="flex items-center gap-2">
+            {notifications.some((n) => !n.read) && (
+              <Button variant="ghost" size="sm" onClick={markAllAsRead} className="text-blue-500 hover:text-blue-400">
+                Mark all as read
+              </Button>
+            )}
+            <Button variant="ghost" size="icon">
+              <Settings className="w-5 h-5" />
+            </Button>
+          </div>
         </div>
 
         {/* Tabs */}
@@ -159,9 +245,15 @@ export function NotificationsContent({ user }: NotificationsContentProps) {
           </div>
         ) : (
           notifications.map((notification) => (
-            <div key={notification.id} className="p-4 hover:bg-gray-900/50 transition-colors">
+            <div
+              key={notification.id}
+              className={`p-4 hover:bg-gray-900/50 transition-colors cursor-pointer ${
+                !notification.read ? "bg-blue-500/5 border-l-2 border-blue-500" : ""
+              }`}
+              onClick={() => !notification.read && markAsRead(notification.id)}
+            >
               <div className="flex gap-3">
-                <div className="flex-shrink-0">{getNotificationIcon(notification.type)}</div>
+                <div className="shrink-0">{getNotificationIcon(notification.type)}</div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start gap-3">
                     <Avatar className="w-8 h-8">
@@ -174,7 +266,12 @@ export function NotificationsContent({ user }: NotificationsContentProps) {
                     </Avatar>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between">
-                        <p className="text-white font-medium">{getNotificationText(notification)}</p>
+                        <div className="flex items-center gap-2">
+                          <p className="text-white font-medium">{getNotificationText(notification)}</p>
+                          {!notification.read && (
+                            <span className="w-2 h-2 bg-blue-500 rounded-full shrink-0" title="Unread" />
+                          )}
+                        </div>
                         <span className="text-gray-500 text-sm">
                           {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true })}
                         </span>

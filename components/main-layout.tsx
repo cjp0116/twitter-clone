@@ -61,7 +61,7 @@ export function MainLayout({ children, title, user, showRightSidebar = true }: M
             <div className="p-4 pt-0 space-y-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-600 rounded-full flex items-center justify-center text-white font-semibold">
+                  <div className="w-10 h-10 bg-linear-to-br from-purple-500 to-pink-600 rounded-full flex items-center justify-center text-white font-semibold">
                     P
                   </div>
                   <div>
@@ -75,7 +75,7 @@ export function MainLayout({ children, title, user, showRightSidebar = true }: M
               </div>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-full flex items-center justify-center text-white font-semibold">
+                  <div className="w-10 h-10 bg-linear-to-br from-blue-500 to-cyan-600 rounded-full flex items-center justify-center text-white font-semibold">
                     D
                   </div>
                   <div>
@@ -89,7 +89,7 @@ export function MainLayout({ children, title, user, showRightSidebar = true }: M
               </div>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-teal-600 rounded-full flex items-center justify-center text-white font-semibold">
+                  <div className="w-10 h-10 bg-linear-to-br from-green-500 to-teal-600 rounded-full flex items-center justify-center text-white font-semibold">
                     じ
                   </div>
                   <div>

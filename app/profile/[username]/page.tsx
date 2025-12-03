@@ -136,7 +136,7 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
           {/* Profile Header */}
           <div className="relative">
             {/* Cover Image */}
-            <div className="h-48 bg-gradient-to-r from-primary/20 to-primary/10"></div>
+            <div className="h-48 bg-linear-to-r from-primary/20 to-primary/10"></div>
 
             {/* Profile Info */}
             <div className="p-4">
