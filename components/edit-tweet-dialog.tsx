@@ -64,13 +64,17 @@ export function EditTweetDialog({ tweet, currentUser, isOpen, onOpenChange, onTw
         })
         .eq("id", tweet.id)
         .eq("author_id", currentUser.id) // Ensure only owner can update
+        .select("id, content")
 
       if (error) throw error
 
       // Rebuild mentions for this tweet
       await supabase.from("tweet_mentions").delete().eq("tweet_id", tweet.id)
 
-      const updatedTweet = updatedTweets?.[0] ?? { id: tweet.id, content: content.trim() }
+      const updatedTweet = updatedTweets?.[0]
+      if (!updatedTweet) {
+        throw new Error("Failed to retrieve updated tweet")
+      }
       const usernames = extractUsernamesFromContent(updatedTweet.content)
 
       if (usernames.length > 0) {
