@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/client"
 import { TweetCard } from "@/components/tweet-card"
 import { Button } from "@/components/ui/button"
 import { RefreshCw, Loader2 } from "lucide-react"
+import { useInfiniteScroll } from "@/hooks/use-infinite-scroll"
 
 interface Tweet {
   id: string
@@ -125,6 +126,11 @@ export function TimelineFeed({ initialTweets, currentUserId, currentUser }: Time
     fetchTweets(0, true)
   }, [fetchTweets])
 
+  const loadMoreRef = useInfiniteScroll({
+    onLoadMore: loadMore,
+    isLoading,
+    hasMore
+  })
   return (
     <div className="space-y-0">
       {/* New tweets notification */}
@@ -164,13 +170,15 @@ export function TimelineFeed({ initialTweets, currentUserId, currentUser }: Time
         )}
       </div>
 
-      {/* Load more button */}
+      {/* Infinite scroll trigger */}
       {hasMore && tweets.length > 0 && (
-        <div className="p-4 border-t border-border">
-          <Button onClick={loadMore} variant="outline" disabled={isLoading} className="w-full bg-transparent">
-            {isLoading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
-            {isLoading ? "Loading..." : "Load more tweets"}
-          </Button>
+        <div ref={loadMoreRef} className="p-4 border-t border-border flex justify-center">
+          {isLoading && (
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              <span>Loading more tweets...</span>
+            </div>
+          )}
         </div>
       )}
     </div>

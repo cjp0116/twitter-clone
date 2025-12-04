@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
-import { TweetCard } from "@/components/tweet-card"
+import { BookmarksContent } from '@/components/bookmarks-content';
 import { AuthenticatedLayout } from "@/components/authenticated-layout"
 import { MainLayout } from "@/components/main-layout"
 import { SidebarInset } from "@/components/ui/sidebar"
@@ -43,6 +43,7 @@ export default async function BookmarksPage() {
     `)
     .eq("user_id", user.id)
     .order("created_at", { ascending: false })
+  .limit(20)
   
   if (bookmarksError) {
     console.error("Error fetching bookmarks:", bookmarksError)
@@ -50,29 +51,17 @@ export default async function BookmarksPage() {
 
   // Extract tweets from bookmarks
   // Supabase returns tweets as an object (not array) for one-to-one relations
-  const bookmarkedTweets = bookmarks?.map((bookmark) => bookmark.tweets).filter(Boolean) || []
+  const bookmarkedTweets = bookmarks?.map((bookmark: any) => bookmark.tweets).filter(Boolean) || []
 
   return (
     <AuthenticatedLayout user={user}>
       <SidebarInset>
         <MainLayout title="Bookmarks" user={user}>
-          {bookmarkedTweets.length > 0 ? (
-            <div className="divide-y divide-border">
-              {bookmarkedTweets.map((tweet) => (
-                <TweetCard
-                  key={tweet.id}
-                  tweet={tweet}
-                  currentUserId={user.id}
-                  currentUser={user}
-                />
-              ))}
-            </div>
-          ) : (
-            <div className="p-8 text-center text-muted-foreground">
-              <p className="text-lg mb-2">No bookmarks yet</p>
-              <p className="text-sm">Save tweets for later by clicking the bookmark icon</p>
-            </div>
-          )}
+          <BookmarksContent
+            initialBookmarks={bookmarkedTweets}
+            currentUserId={user.id}
+            currentUser={user}
+          />
         </MainLayout>
       </SidebarInset>
     </AuthenticatedLayout>

@@ -9,6 +9,7 @@ import { Search, Loader2, User } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
+import { useInfiniteScroll } from '@/hooks/use-infinite-scroll'
 
 interface SearchResult {
   tweets: any[]
@@ -25,6 +26,10 @@ export function SearchComponent({ currentUserId, currentUser }: SearchComponentP
   const [results, setResults] = useState<SearchResult>({ tweets: [], users: [] })
   const [isSearching, setIsSearching] = useState(false)
   const [hasSearched, setHasSearched] = useState(false)
+  const [isLoadingMore, setIsLoadingMore] = useState(false)
+  const [hasMoreTweets, setHasMoreTweets] = useState(false)
+  const [hasMoreUsers, setHasMoreUsers] = useState(false)
+
   const supabase = createClient();
 
   const performSearch = useCallback(async (searchQuery: string) => {
@@ -60,10 +65,13 @@ export function SearchComponent({ currentUserId, currentUser }: SearchComponentP
       if (tweetsError) throw tweetsError;
 
       setResults({ tweets: tweets || [], users })
-
+      setHasMoreTweets((tweets?.length || 0) === 20)
+      setHasMoreUsers(users.length === 10)
     } catch (error) {
       console.error('Search error:', error);
       setResults({ tweets: [], users: [] })
+      setHasMoreTweets(false)
+      setHasMoreUsers(false)
     } finally {
       setIsSearching(false)
     }
@@ -75,6 +83,69 @@ export function SearchComponent({ currentUserId, currentUser }: SearchComponentP
     }, 300)
     return () => clearTimeout(timeoutId)
   }, [query, performSearch])
+
+  const loadMoreTweets = useCallback(async () => {
+    if (isLoadingMore || !query.trim()) return
+    setIsLoadingMore(true)
+    try {
+      const isHashtagSearch = query.trim().startsWith('#')
+      const tweetSearchTerm = isHashtagSearch ? query.trim() : `%${query}%`
+
+      const { data: tweets, error } = await supabase
+        .from('tweets')
+        .select(`
+          *,
+          profiles (username, display_name, avatar_url)
+        `)
+        .ilike('content', isHashtagSearch ? `${tweetSearchTerm}` : tweetSearchTerm)
+        .order('created_at', { ascending: false })
+        .range(results.tweets.length, results.tweets.length + 19)
+
+      if (error) throw error
+
+      setResults(prev => ({ ...prev, tweets: [...prev.tweets, ...(tweets || [])] }))
+      setHasMoreTweets((tweets?.length || 0) === 20)
+    } catch (error) {
+      console.error('Error loading more tweets:', error)
+    } finally {
+      setIsLoadingMore(false)
+    }
+  }, [supabase, query, results.tweets.length, isLoadingMore])
+
+
+
+  const loadMoreUsers = useCallback(async () => {
+    if (isLoadingMore || !query.trim() || query.trim().startsWith('#')) return
+    setIsLoadingMore(true)
+    try {
+      const { data: users, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .or(`username.ilike.%${query}%,display_name.ilike.%${query}%,bio.ilike.%${query}%`)
+        .range(results.users.length, results.users.length + 9)
+
+      if (error) throw error
+
+      setResults(prev => ({ ...prev, users: [...prev.users, ...(users || [])] }))
+      setHasMoreUsers((users?.length || 0) === 10)
+    } catch (error) {
+      console.error('Error loading more users:', error)
+    } finally {
+      setIsLoadingMore(false)
+    }
+  }, [supabase, query, results.users.length, isLoadingMore])
+
+  const loadMoreTweetsRef = useInfiniteScroll({
+    onLoadMore: loadMoreTweets,
+    isLoading: isLoadingMore,
+    hasMore: hasMoreTweets,
+  })
+
+  const loadMoreUsersRef = useInfiniteScroll({
+    onLoadMore: loadMoreUsers,
+    isLoading: isLoadingMore,
+    hasMore: hasMoreUsers,
+  })
 
   return (
     <div className="space-y-4">
@@ -128,6 +199,16 @@ export function SearchComponent({ currentUserId, currentUser }: SearchComponentP
                     </div>
                   </Link>
                 ))}
+                {hasMoreUsers && (
+                  <div ref={loadMoreUsersRef} className="p-4 flex justify-center">
+                    {isLoadingMore && (
+                      <div className="flex items-center gap-2 text-muted-foreground">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        <span>Loading more users...</span>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -145,6 +226,16 @@ export function SearchComponent({ currentUserId, currentUser }: SearchComponentP
                     currentUser={currentUser}
                   />
                 ))}
+                {hasMoreTweets && (
+                  <div ref={loadMoreTweetsRef} className='p-4 flex justify-center'>
+                    {isLoadingMore && (
+                      <div className="flex items-center gap-2 text-muted-foreground">
+                        <Loader2 className='h-2 w-4 animate-spin' />
+                        <span>Loading more tweets...</span>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           )}

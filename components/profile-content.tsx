@@ -1,8 +1,11 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { TweetCard } from "@/components/tweet-card"
+import { createClient } from "@/lib/supabase/client"
+import { useInfiniteScroll } from "@/hooks/use-infinite-scroll"
+import { Loader2 } from "lucide-react"
 
 interface Tweet {
   id: string
@@ -28,11 +31,90 @@ interface ProfileContentProps {
   currentUserId: string
   isOwnProfile: boolean
   username: string
+  profileId: string
 }
 
-export function ProfileContent({ tweets, currentUserId, isOwnProfile, username }: ProfileContentProps) {
+export function ProfileContent({ tweets: initialTweets, currentUserId, isOwnProfile, username, profileId }: ProfileContentProps) {
   const [activeTab, setActiveTab] = useState("tweets")
+  const [tweets, setTweets] = useState<Tweet[]>(initialTweets)
+  const [isLoading, setIsLoading] = useState(false);
+  const [hasMore, setHasMore] = useState(initialTweets.length === 20)
+  const supabase = createClient()
 
+  useEffect(() => {
+    setTweets(initialTweets)
+    setHasMore(initialTweets.length === 20)
+  }, [initialTweets])
+
+  const fetchMoreTweets = useCallback(async () => {
+    if (isLoading) return
+    setIsLoading(true)
+    try {
+      const { data: ownTweets, error: tweetsError } = await supabase.from('tweets')
+        .select(`
+          *,
+          profiles (
+            username,
+            display_name,
+            avatar_url
+          )  
+        `)
+        .eq('author_id', profileId)
+        .order('created_at', { ascending: false })
+        .range(tweets.length, tweets.length + 19)
+      
+      if (tweetsError) throw tweetsError
+      
+      // fetch mentioned tweets
+      const { data: mentionedTweets, error: mentionedError } = await supabase
+        .from('tweets')
+        .select(`
+          *,
+          profiles (
+            username,
+            display_name,
+            avatar_url
+          ),
+          tweet_mentions!inner (
+            mentioned_user_id
+          )  
+          `)
+        .eq('tweet_mentions.mentioned_user_id', profileId)
+        .order('created_at', { ascending: false })
+        .range(tweets.length, tweets.length + 19)
+      
+      if (mentionedError) throw mentionedError
+      
+      //combine and dedupe tweets
+      const tweetsMap = new Map<string, Tweet>()
+      for (const t of tweets) {
+        tweetsMap.set(t.id, t)
+      }
+      for (const t of ownTweets || []) {
+        tweetsMap.set(t.id, t as Tweet)
+      }
+      for (const t of mentionedTweets || []) {
+        tweetsMap.set(t.id, t as Tweet)
+      }
+      const combinedTweets = Array.from(tweetsMap.values()).sort(
+        (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+      )
+
+      setTweets(combinedTweets)
+      setHasMore((ownTweets?.length || 0) === 20 || (mentionedTweets?.length || 0) === 20)
+
+    } catch (error) {
+      console.error('Error fetching more tweets:', error)
+    } finally {
+      setIsLoading(false)
+    }
+  }, [supabase, profileId, tweets, isLoading])
+
+  const loadMoreRef = useInfiniteScroll({
+    onLoadMore: fetchMoreTweets,
+    isLoading,
+    hasMore
+  })
   // Filter tweets with media
   const mediaTweets = tweets.filter((tweet) => tweet.media_urls && tweet.media_urls.length > 0)
 
@@ -58,7 +140,19 @@ export function ProfileContent({ tweets, currentUserId, isOwnProfile, username }
       <TabsContent value="tweets" className="mt-0">
         <div className="divide-y divide-border">
           {tweets && tweets.length > 0 ? (
-            tweets.map((tweet) => <TweetCard key={tweet.id} tweet={tweet} currentUserId={currentUserId} />)
+            <>
+              {tweets.map((tweet) => <TweetCard key={tweet.id} tweet={tweet} currentUserId={currentUserId} />)}
+              {hasMore && (
+                <div ref={loadMoreRef} className="p-4 flex justify-center">
+                  {isLoading && (
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <span>Loading more tweets...</span>
+                    </div>
+                  )}
+                </div>
+              )}
+            </>
           ) : (
             <div className="p-8 text-center text-muted-foreground">
               <p className="text-lg mb-2">No tweets yet</p>
@@ -73,7 +167,19 @@ export function ProfileContent({ tweets, currentUserId, isOwnProfile, username }
       <TabsContent value="media" className="mt-0">
         <div className="divide-y divide-border">
           {mediaTweets && mediaTweets.length > 0 ? (
-            mediaTweets.map((tweet) => <TweetCard key={tweet.id} tweet={tweet} currentUserId={currentUserId} />)
+            <>
+              {mediaTweets.map((tweet) => <TweetCard key={tweet.id} tweet={tweet} currentUserId={currentUserId} />)}
+              {hasMore && (
+                <div ref={loadMoreRef} className="p-4 flex justify-center">
+                  {isLoading && (
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <span>Loading more tweets...</span>
+                    </div>
+                  )}
+                </div>
+              )}
+            </>
           ) : (
             <div className="p-8 text-center text-muted-foreground">
               <p className="text-lg mb-2">No media yet</p>
