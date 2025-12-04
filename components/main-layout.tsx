@@ -4,15 +4,27 @@ import type React from "react"
 import type { User } from "@supabase/supabase-js"
 import { Card, CardHeader, CardTitle } from "@/components/ui/card"
 import { SidebarTrigger } from "@/components/ui/sidebar"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { FollowButton } from "@/components/follow-button"
+import Link from "next/link"
+
+interface SuggestedUser {
+  id: string
+  username: string
+  display_name: string
+  avatar_url: string | null
+  isFollowing: boolean
+}
 
 interface MainLayoutProps {
   children: React.ReactNode
   title: string
   user?: User
   showRightSidebar?: boolean
+  suggestedUsers?: SuggestedUser[]
 }
 
-export function MainLayout({ children, title, user, showRightSidebar = true }: MainLayoutProps) {
+export function MainLayout({ children, title, user, showRightSidebar = true, suggestedUsers = [] }: MainLayoutProps) {
   return (
     <div className="flex max-w-7xl mx-auto">
       <div className="w-[600px] border-x border-border">
@@ -54,56 +66,44 @@ export function MainLayout({ children, title, user, showRightSidebar = true }: M
           </Card>
 
           {/* Who to follow section */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Who to follow</CardTitle>
-            </CardHeader>
-            <div className="p-4 pt-0 space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-linear-to-br from-purple-500 to-pink-600 rounded-full flex items-center justify-center text-white font-semibold">
-                    P
+          {suggestedUsers.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Who to follow</CardTitle>
+              </CardHeader>
+              <div className="p-4 pt-0 space-y-3">
+                {suggestedUsers.slice(0, 3).map((suggestedUser) => (
+                  <div key={suggestedUser.id} className="flex items-center justify-between">
+                    <Link
+                      href={`/profile/${suggestedUser.username}`}
+                      className="flex items-center gap-3 flex-1 min-w-0 hover:opacity-80 transition-opacity"
+                    >
+                      <Avatar className="h-10 w-10">
+                        <AvatarImage src={suggestedUser.avatar_url || undefined} />
+                        <AvatarFallback className="bg-primary text-primary-foreground">
+                          {suggestedUser.display_name[0]?.toUpperCase() || 'U'}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold truncate">{suggestedUser.display_name}</p>
+                        <p className="text-sm text-muted-foreground truncate">@{suggestedUser.username}</p>
+                      </div>
+                    </Link>
+                    {user && (
+                      <FollowButton
+                        targetUserId={suggestedUser.id}
+                        isFollowing={suggestedUser.isFollowing}
+                        currentUserId={user.id}
+                      />
+                    )}
                   </div>
-                  <div>
-                    <p className="font-semibold">pope papi 🔮 bday ...</p>
-                    <p className="text-sm text-muted-foreground">@THEEsimphunter</p>
-                  </div>
-                </div>
-                <button className="bg-foreground text-background px-4 py-1.5 rounded-full text-sm font-semibold hover:bg-foreground/90">
-                  Follow
-                </button>
+                ))}
+                {suggestedUsers.length > 3 && (
+                  <div className="text-blue-500 hover:underline cursor-pointer p-2">Show more</div>
+                )}
               </div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-linear-to-br from-blue-500 to-cyan-600 rounded-full flex items-center justify-center text-white font-semibold">
-                    D
-                  </div>
-                  <div>
-                    <p className="font-semibold">fj</p>
-                    <p className="text-sm text-muted-foreground">@dancosparado</p>
-                  </div>
-                </div>
-                <button className="bg-foreground text-background px-4 py-1.5 rounded-full text-sm font-semibold hover:bg-foreground/90">
-                  Follow
-                </button>
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-linear-to-br from-green-500 to-teal-600 rounded-full flex items-center justify-center text-white font-semibold">
-                    じ
-                  </div>
-                  <div>
-                    <p className="font-semibold">じゅーレー</p>
-                    <p className="text-sm text-muted-foreground">@juicy20191129</p>
-                  </div>
-                </div>
-                <button className="bg-foreground text-background px-4 py-1.5 rounded-full text-sm font-semibold hover:bg-foreground/90">
-                  Follow
-                </button>
-              </div>
-              <div className="text-blue-500 hover:underline cursor-pointer p-2">Show more</div>
-            </div>
-          </Card>
+            </Card>
+          )}
         </div>
       )}
     </div>

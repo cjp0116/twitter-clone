@@ -14,6 +14,8 @@ import { BookmarkButton } from "@/components/bookmark-button"
 import { EditTweetDialog } from "@/components/edit-tweet-dialog"
 import { DeleteTweetDialog } from "@/components/delete-tweet-dialog"
 import { TweetMediaGallery } from "@/components/tweet-media-gallery"
+import { QuoteTweetDialog } from "@/components/quote-tweet-dialog"
+import { QuotedTweetPreview } from "@/components/quoted-tweet-preview"
 import Link from "next/link"
 
 interface Tweet {
@@ -55,6 +57,8 @@ export function TweetCard({ tweet, currentUserId, currentUser, onUpdate }: Tweet
   const [isLiking, setIsLiking] = useState(false)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+  const [isQuoteDialogOpen, setIsQuoteDialogOpen] = useState(false)
+  const [quotedTweet, setQuotedTweet] = useState<any>(null)
   const supabase = createClient()
 
   // Load initial like state so we don't try to insert duplicate likes
@@ -76,6 +80,35 @@ export function TweetCard({ tweet, currentUserId, currentUser, onUpdate }: Tweet
 
     void loadLikeState()
   }, [currentUserId, supabase, tweet.id])
+
+  useEffect(() => {
+    if (!tweet.retweet_of_id || !tweet.content) return // Not a quote tweet
+
+    const fetchQuotedTweet = async () => {
+      const { data, error } = await supabase
+        .from("tweets")
+        .select(`
+          id,
+          content,
+          created_at,
+          author_id,
+          media_urls,
+          media_types,
+          profiles (
+            username,
+            display_name,
+            avatar_url
+          )
+        `)
+        .eq("id", tweet.retweet_of_id)
+        .single()
+
+      if (!error && data) {
+        setQuotedTweet(data)
+      }
+    }
+    fetchQuotedTweet()
+  }, [tweet.retweet_of_id, tweet.content, supabase])
 
   const handleLike = async () => {
     if (!currentUserId || isLiking) return
@@ -111,7 +144,8 @@ export function TweetCard({ tweet, currentUserId, currentUser, onUpdate }: Tweet
   }
 
   const isOwner = currentUserId === tweet.author_id
-  const isRetweet = !!tweet.retweet_of_id
+  const isPlainRetweet = !!tweet.retweet_of_id && !tweet.content // Plain retweet has no content
+  const isQuoteTweet = !!tweet.retweet_of_id && !!tweet.content // Quote tweet has content
 
   const renderContent = (text: string) => {
     const parts = text.split(/(\s+)/)
@@ -151,7 +185,7 @@ export function TweetCard({ tweet, currentUserId, currentUser, onUpdate }: Tweet
     <>
       <Card className="border-0 border-b rounded-none hover:bg-muted/30 transition-colors">
         <CardContent className="p-4">
-          {isRetweet && (
+          {isPlainRetweet && (
             <div className="flex items-center gap-2 mb-2 text-sm text-muted-foreground">
               <Repeat2 className="h-4 w-4 ml-8" />
               <span>{tweet.profiles.display_name} retweeted</span>
@@ -186,7 +220,7 @@ export function TweetCard({ tweet, currentUserId, currentUser, onUpdate }: Tweet
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      {isOwner && !isRetweet && (
+                      {isOwner && !isPlainRetweet && (
                         <>
                           <DropdownMenuItem onClick={() => setIsEditDialogOpen(true)}>
                             <Edit className="h-4 w-4 mr-2" />
@@ -217,6 +251,12 @@ export function TweetCard({ tweet, currentUserId, currentUser, onUpdate }: Tweet
                 <TweetMediaGallery mediaUrls={tweet.media_urls} mediaTypes={tweet.media_types || []} />
               )}
 
+              {isQuoteTweet && quotedTweet && ( 
+                <div className="mt-3">
+                  <QuotedTweetPreview tweet={quotedTweet} compact={true} />
+                </div>
+              )}
+
               <div className="flex items-center justify-between max-w-md pt-2">
                 {currentUser && <ReplyDialog tweet={tweet} currentUser={currentUser} onReplyPosted={onUpdate} />}
                 <span className="text-sm text-muted-foreground ml-1">{tweet.replies_count}</span>
@@ -227,6 +267,7 @@ export function TweetCard({ tweet, currentUserId, currentUser, onUpdate }: Tweet
                     currentUserId={currentUserId}
                     initialRetweetCount={tweet.retweets_count}
                     onUpdate={onUpdate}
+                    onQuote={() => setIsQuoteDialogOpen(true)}
                   />
                 )}
 
@@ -278,6 +319,16 @@ export function TweetCard({ tweet, currentUserId, currentUser, onUpdate }: Tweet
             onTweetDeleted={onUpdate}
           />
         </>
+      )}
+
+      {currentUser && (
+        <QuoteTweetDialog
+          tweet={tweet}
+          currentUser={currentUser}
+          isOpen={isQuoteDialogOpen}
+          onOpenChange={setIsQuoteDialogOpen}
+          onQuotePosted={onUpdate}
+        />
       )}
     </>
   )
