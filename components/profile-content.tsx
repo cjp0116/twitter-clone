@@ -1,11 +1,12 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useMemo } from "react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { TweetCard } from "@/components/tweet-card"
 import { createClient } from "@/lib/supabase/client"
 import { useInfiniteScroll } from "@/hooks/use-infinite-scroll"
 import { Loader2 } from "lucide-react"
+import { useBlockedMuted, filterBlockedMutedTweets } from "@/hooks/use-blocked-muted"
 
 interface Tweet {
   id: string
@@ -40,6 +41,14 @@ export function ProfileContent({ tweets: initialTweets, currentUserId, isOwnProf
   const [isLoading, setIsLoading] = useState(false);
   const [hasMore, setHasMore] = useState(initialTweets.length === 20)
   const supabase = createClient()
+
+  const { blockedUserIds, mutedUserIds } = useBlockedMuted(currentUserId)
+
+  // Filter tweets to exclude blocked/muted users (except for the profile owner's own tweets)
+  const filteredTweets = useMemo(
+    () => filterBlockedMutedTweets(tweets, blockedUserIds, mutedUserIds),
+    [tweets, blockedUserIds, mutedUserIds]
+  )
 
   useEffect(() => {
     setTweets(initialTweets)
@@ -116,7 +125,7 @@ export function ProfileContent({ tweets: initialTweets, currentUserId, isOwnProf
     hasMore
   })
   // Filter tweets with media
-  const mediaTweets = tweets.filter((tweet) => tweet.media_urls && tweet.media_urls.length > 0)
+  const mediaTweets = filteredTweets.filter((tweet) => tweet.media_urls && tweet.media_urls.length > 0)
 
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -139,9 +148,9 @@ export function ProfileContent({ tweets: initialTweets, currentUserId, isOwnProf
 
       <TabsContent value="tweets" className="mt-0">
         <div className="divide-y divide-border">
-          {tweets && tweets.length > 0 ? (
+          {filteredTweets && filteredTweets.length > 0 ? (
             <>
-              {tweets.map((tweet) => <TweetCard key={tweet.id} tweet={tweet} currentUserId={currentUserId} />)}
+              {filteredTweets.map((tweet) => <TweetCard key={tweet.id} tweet={tweet} currentUserId={currentUserId} />)}
               {hasMore && (
                 <div ref={loadMoreRef} className="p-4 flex justify-center">
                   {isLoading && (

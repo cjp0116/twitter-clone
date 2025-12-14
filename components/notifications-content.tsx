@@ -1,13 +1,13 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useMemo } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Settings, Heart, UserPlus, Sparkles, AtSign, Loader2 } from "lucide-react"
 import { formatDistanceToNow } from "date-fns"
 import { useInfiniteScroll } from "@/hooks/use-infinite-scroll"
-
+import { useBlockedMuted, filterBlockedMutedTweets } from "@/hooks/use-blocked-muted"
 interface Notification {
   id: string
   type: "follow" | "like" | "reply" | "retweet"
@@ -39,7 +39,8 @@ export function NotificationsContent({ user }: NotificationsContentProps) {
   const [loading, setLoading] = useState(true)
   const [isLoadingMore, setIsLoadingMore] = useState(false)
   const [hasMore, setHasMore] = useState(true)
-
+  const { blockedUserIds } = useBlockedMuted(user.id)
+  const filteredNotifications = useMemo(() => notifications.filter(notif => !blockedUserIds.includes(notif.actor_id)), [notifications, blockedUserIds]);
   const supabase = createClient()
 
   useEffect(() => {
@@ -229,7 +230,7 @@ export function NotificationsContent({ user }: NotificationsContentProps) {
         <div className="flex items-center justify-between">
           <h1 className="text-xl font-bold">Notifications</h1>
           <div className="flex items-center gap-2">
-            {notifications.some((n) => !n.read) && (
+            {filteredNotifications.some((n) => !n.read) && (
               <Button variant="ghost" size="sm" onClick={markAllAsRead} className="text-blue-500 hover:text-blue-400">
                 Mark all as read
               </Button>
@@ -277,13 +278,13 @@ export function NotificationsContent({ user }: NotificationsContentProps) {
       <div className="divide-y divide-gray-800">
         {loading ? (
           <div className="p-8 text-center text-gray-500">Loading notifications...</div>
-        ) : notifications.length === 0 ? (
+        ) : filteredNotifications.length === 0 ? (
           <div className="p-8 text-center text-gray-500">
             {activeTab === "mentions" ? "No mentions yet" : "No notifications yet"}
           </div>
         ) : (
           <>
-            {notifications.map((notification) => (
+            {filteredNotifications.map((notification) => (
               <div
                 key={notification.id}
                 className={`p-4 hover:bg-gray-900/50 transition-colors cursor-pointer ${!notification.read ? "bg-blue-500/5 border-l-2 border-blue-500" : ""
@@ -323,7 +324,7 @@ export function NotificationsContent({ user }: NotificationsContentProps) {
                 </div>
               </div>
             ))}
-            {hasMore && (
+            {hasMore && filteredNotifications.length > 0 && (
               <div ref={loadMoreRef} className="p-4 flex justify-center">
                 {isLoadingMore && (
                   <div className="flex items-center gap-2 text-gray-500">

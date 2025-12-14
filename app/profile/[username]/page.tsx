@@ -13,6 +13,7 @@ import { SidebarInset, SidebarTrigger } from "@/components/ui/sidebar"
 import { ArrowLeft, Calendar } from "lucide-react"
 import Link from "next/link"
 import { formatDistanceToNow } from "date-fns"
+import { BlockMuteButton } from "@/components/block-mute-button"
 
 interface ProfilePageProps {
   params: {
@@ -210,12 +211,18 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
                     {profile.display_name[0]?.toUpperCase() || "U"}
                   </AvatarFallback>
                 </Avatar>
-
-                <div className="mt-16">
+                <div className="mt-16 flex items-center gap-2">
                   {isOwnProfile ? (
                     <EditProfileButton profile={profile} />
                   ) : (
-                    <FollowButton targetUserId={profile.id} isFollowing={isFollowing} currentUserId={user.id} />
+                    <>
+                      <FollowButton targetUserId={profile.id} isFollowing={isFollowing} currentUserId={user.id} />
+                      <BlockMuteButton
+                        targetUserId={profile.id}
+                        targetUsername={profile.username}
+                        currentUserId={user.id}
+                      />
+                    </>
                   )}
                 </div>
               </div>
