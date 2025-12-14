@@ -6,6 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { TweetCard } from "@/components/tweet-card"
 import { FollowButton } from "@/components/follow-button"
 import { EditProfileButton } from "@/components/edit-profile-button"
+import { BlockMuteButton } from "@/components/block-mute-button"
 import { ProfileContent } from "@/components/profile-content"
 import { AuthenticatedLayout } from "@/components/authenticated-layout"
 import { MainLayout } from "@/components/main-layout"
@@ -183,11 +184,18 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
                   </AvatarFallback>
                 </Avatar>
 
-                <div className="mt-16">
+                <div className="mt-16 flex items-center gap-2">
                   {isOwnProfile ? (
                     <EditProfileButton profile={profile} />
                   ) : (
-                    <FollowButton targetUserId={profile.id} isFollowing={isFollowing} currentUserId={user.id} />
+                    <>
+                      <FollowButton targetUserId={profile.id} isFollowing={isFollowing} currentUserId={user.id} />
+                      <BlockMuteButton
+                        targetUserId={profile.id}
+                        targetUsername={profile.username}
+                        currentUserId={user.id}
+                      />
+                    </>
                   )}
                 </div>
               </div>

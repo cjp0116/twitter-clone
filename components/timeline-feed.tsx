@@ -1,11 +1,12 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useMemo } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { TweetCard } from "@/components/tweet-card"
 import { Button } from "@/components/ui/button"
 import { RefreshCw, Loader2 } from "lucide-react"
 import { useInfiniteScroll } from "@/hooks/use-infinite-scroll"
+import { useBlockedMuted, filterBlockedMutedTweets } from "@/hooks/use-blocked-muted"
 
 interface Tweet {
   id: string
@@ -42,6 +43,15 @@ export function TimelineFeed({ initialTweets, currentUserId, currentUser }: Time
   const [hasMore, setHasMore] = useState(true)
   const [newTweetsCount, setNewTweetsCount] = useState(0)
   const supabase = createClient()
+
+  // Get blocked and muted users
+  const { blockedUserIds, mutedUserIds } = useBlockedMuted(currentUserId)
+
+  // Filter tweets to exclude blocked/muted users
+  const filteredTweets = useMemo(
+    () => filterBlockedMutedTweets(tweets, blockedUserIds, mutedUserIds),
+    [tweets, blockedUserIds, mutedUserIds]
+  )
 
   const fetchTweets = useCallback(
     async (offset = 0, isRefresh = false) => {
@@ -154,8 +164,8 @@ export function TimelineFeed({ initialTweets, currentUserId, currentUser }: Time
 
       {/* Tweet list */}
       <div className="divide-y divide-border">
-        {tweets.length > 0 ? (
-          tweets.map((tweet) => (
+        {filteredTweets.length > 0 ? (
+          filteredTweets.map((tweet) => (
             <TweetCard
               key={tweet.id}
               tweet={tweet}

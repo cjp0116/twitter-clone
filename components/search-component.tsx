@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { Input } from '@/components/ui/input'
 import { Card } from '@/components/ui/card'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -10,6 +10,7 @@ import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { useInfiniteScroll } from '@/hooks/use-infinite-scroll'
+import { useBlockedMuted, filterBlockedMutedTweets } from '@/hooks/use-blocked-muted'
 
 interface SearchResult {
   tweets: any[]
@@ -30,6 +31,18 @@ export function SearchComponent({ currentUserId, currentUser }: SearchComponentP
   const [hasMoreTweets, setHasMoreTweets] = useState(false)
   const [hasMoreUsers, setHasMoreUsers] = useState(false)
   const supabase = createClient();
+
+  // Get blocked and muted users
+  const { blockedUserIds, mutedUserIds } = useBlockedMuted(currentUserId)
+
+  // Filter results to exclude blocked/muted users
+  const filteredResults = useMemo(() => {
+    const excludedIds = new Set([...blockedUserIds, ...mutedUserIds])
+    return {
+      tweets: filterBlockedMutedTweets(results.tweets, blockedUserIds, mutedUserIds),
+      users: results.users.filter((user) => !excludedIds.has(user.id))
+    }
+  }, [results, blockedUserIds, mutedUserIds])
 
   const performSearch = useCallback(async (searchQuery: string) => {
     if (!searchQuery.trim()) {
@@ -169,11 +182,11 @@ export function SearchComponent({ currentUserId, currentUser }: SearchComponentP
       {hasSearched && (
         <div className="space-y-6">
           {/* Users Results */}
-          {results.users.length > 0 && (
+          {filteredResults.users.length > 0 && (
             <div>
               <h2 className="text-xl font-bold px-4 mb-3">People</h2>
               <div className="divide-y divide-border">
-                {results.users.map((user) => (
+                {filteredResults.users.map((user) => (
                   <Link
                     key={user.id}
                     href={`/profile/${user.username}`}
@@ -214,11 +227,11 @@ export function SearchComponent({ currentUserId, currentUser }: SearchComponentP
           )}
 
           {/* Tweets Results */}
-          {results.tweets.length > 0 && (
+          {filteredResults.tweets.length > 0 && (
             <div>
               <h2 className="text-xl font-bold px-4 mb-3">Tweets</h2>
               <div className="divide-y divide-border">
-                {results.tweets.map((tweet) => (
+                {filteredResults.tweets.map((tweet) => (
                   <TweetCard
                     key={tweet.id}
                     tweet={tweet}
@@ -241,7 +254,7 @@ export function SearchComponent({ currentUserId, currentUser }: SearchComponentP
           )}
 
           {/* No Results */}
-          {results.tweets.length === 0 && results.users.length === 0 && !isSearching && (
+          {filteredResults.tweets.length === 0 && filteredResults.users.length === 0 && !isSearching && (
             <div className="p-8 text-center text-muted-foreground">
               <Search className="h-12 w-12 mx-auto mb-3 opacity-50" />
               <p className="text-lg mb-2">No results for "{query}"</p>
