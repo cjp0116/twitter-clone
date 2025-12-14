@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from "react"
 import { createClient } from "@/lib/supabase/client"
-import { TweetCard } from "@/components/tweet-card"
+import { TweetCard } from "@/components/tweet/tweet-card"
 import { Button } from "@/components/ui/button"
 import { RefreshCw, Loader2 } from "lucide-react"
 import { useInfiniteScroll } from "@/hooks/use-infinite-scroll"

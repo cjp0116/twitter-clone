@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Home, Search, Bell, Mail, Bookmark, User, Settings } from "lucide-react"
-import { LogoutButton } from "@/components/logout-button"
+import { LogoutButton } from "@/components/auth/logout-button"
 import { createClient } from "@/lib/supabase/client"
 import {
   Sidebar,

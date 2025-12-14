@@ -1,9 +1,9 @@
 import { createClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
-import { NotificationsContent } from "@/components/notifications-content"
-import { AuthenticatedLayout } from "@/components/authenticated-layout"
+import { NotificationsContent } from "@/components/feed/notifications-content"
+import { AuthenticatedLayout } from "@/components/auth/authenticated-layout"
 import { SidebarInset } from "@/components/ui/sidebar"
-import { MainLayout } from "@/components/main-layout"
+import { MainLayout } from "@/components/layout/main-layout"
 import { Suspense } from "react";
 import { NotificationsSkeleton } from "@/components/skeletons/notifications-skeleton";
 

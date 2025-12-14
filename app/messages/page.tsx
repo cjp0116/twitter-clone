@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
-import { MessagesLayout } from "@/components/messages-layout"
+import { MessagesLayout } from "@/components/layout/messages-layout"
 
 export default async function MessagesPage() {
   const supabase = await createClient()

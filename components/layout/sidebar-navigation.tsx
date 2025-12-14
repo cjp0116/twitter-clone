@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Home, Search, Bell, Mail, Bookmark, User, Settings } from "lucide-react"
-import { LogoutButton } from "@/components/logout-button"
+import { LogoutButton } from "@/components/auth/logout-button"
 
 interface SidebarNavigationProps {
   user: {

@@ -1,8 +1,8 @@
 import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
-import { BookmarksContent } from "@/components/bookmarks-content"
-import { AuthenticatedLayout } from "@/components/authenticated-layout"
-import { MainLayout } from "@/components/main-layout"
+import { BookmarksContent } from "@/components/feed/bookmarks-content"
+import { AuthenticatedLayout } from "@/components/auth/authenticated-layout"
+import { MainLayout } from "@/components/layout/main-layout"
 import { SidebarInset } from "@/components/ui/sidebar"
 
 export default async function BookmarksPage() {

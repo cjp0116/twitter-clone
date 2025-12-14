@@ -1,9 +1,9 @@
 "use client"
 
 import { useState } from "react"
-import { ConversationList } from "@/components/conversation-list"
-import { MessageThread } from "@/components/message-thread"
-import { NewMessageDialog } from "@/components/new-message-dialog"
+import { ConversationList } from "@/components/messages/conversation-list"
+import { MessageThread } from "@/components/messages/message-thread"
+import { NewMessageDialog } from "@/components/messages/new-message-dialog"
 import { Button } from "@/components/ui/button"
 import { MessageSquarePlus } from "lucide-react"
 

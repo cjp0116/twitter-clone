@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from "react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { TweetCard } from "@/components/tweet-card"
+import { TweetCard } from "@/components/tweet/tweet-card"
 import { createClient } from "@/lib/supabase/client"
 import { useInfiniteScroll } from "@/hooks/use-infinite-scroll"
 import { useBlockedMuted, filterBlockedMutedTweets } from "@/hooks/use-blocked-muted"

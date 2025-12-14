@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Loader2, ImageIcon, X } from "lucide-react"
-import { QuotedTweetPreview } from "@/components/quoted-tweet-preview"
+import { QuotedTweetPreview } from "@/components/tweet/quoted-tweet-preview"
 
 interface MediaFile {
   file: File

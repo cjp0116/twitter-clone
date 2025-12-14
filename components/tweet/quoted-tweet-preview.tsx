@@ -4,7 +4,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Card, CardContent } from "@/components/ui/card"
 import { formatDistanceToNow } from "date-fns"
 import Link from "next/link"
-import { TweetMediaGallery } from "@/components/tweet-media-gallery"
+import { TweetMediaGallery } from "@/components/tweet/tweet-media-gallery"
 
 interface QuotedTweetPreviewProps {
   tweet: {
