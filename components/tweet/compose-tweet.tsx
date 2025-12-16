@@ -173,6 +173,13 @@ export function ComposeTweet({ user, onTweetPosted }: ComposeTweetProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+
+    console.log("=== Tweet Submit Debug ===")
+    console.log("Content:", content)
+    console.log("Media files:", mediaFiles.length)
+    console.log("Poll data:", pollData)
+    console.log("=========================")
+
     if ((!content.trim() && mediaFiles.length === 0 && !pollData) || content.length > 280 || !profile) return
 
     setIsPosting(true)
