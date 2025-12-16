@@ -73,12 +73,12 @@ export function PollDisplay({ tweetId, currentUserId }: PollDisplayProps) {
 
   const fetchPollData = async () => {
     try {
-      // Fetch poll
+      // Fetch poll - use maybeSingle() to avoid errors when no poll exists
       const { data: pollData, error: pollError } = await supabase
         .from("polls")
         .select("*")
         .eq("tweet_id", tweetId)
-        .single()
+        .maybeSingle()
 
       if (pollError || !pollData) return
 
