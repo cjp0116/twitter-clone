@@ -37,17 +37,21 @@ export function PollDisplay({ tweetId, currentUserId }: PollDisplayProps) {
 
   useEffect(() => {
     fetchPollData()
+  }, [tweetId])
 
-    // Subscribe to real-time updates on poll votes
+  // Set up real-time subscriptions only when poll exists
+  useEffect(() => {
+    if (!poll?.id) return
+
     const channel = supabase
-      .channel(`poll-${tweetId}`)
+      .channel(`poll-${poll.id}`)
       .on(
         "postgres_changes",
         {
           event: "*",
           schema: "public",
           table: "poll_votes",
-          filter: `poll_id=eq.${poll?.id}`,
+          filter: `poll_id=eq.${poll.id}`,
         },
         () => {
           fetchPollData()
@@ -69,7 +73,7 @@ export function PollDisplay({ tweetId, currentUserId }: PollDisplayProps) {
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [tweetId, poll?.id])
+  }, [poll?.id])
 
   const fetchPollData = async () => {
     try {
@@ -80,8 +84,17 @@ export function PollDisplay({ tweetId, currentUserId }: PollDisplayProps) {
         .eq("tweet_id", tweetId)
         .maybeSingle()
 
-      if (pollError || !pollData) return
+      if (pollError) {
+        console.error("Error fetching poll for tweet", tweetId, ":", pollError)
+        return
+      }
 
+      if (!pollData) {
+        console.log("No poll found for tweet:", tweetId)
+        return
+      }
+
+      console.log("Poll found for tweet", tweetId, ":", pollData)
       setPoll(pollData)
       setHasEnded(new Date(pollData.ends_at) < new Date())
 

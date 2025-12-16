@@ -198,6 +198,8 @@ export function ComposeTweet({ user, onTweetPosted }: ComposeTweetProps) {
 
       // Create poll if poll data exists
       if (insertedTweet && pollData) {
+        console.log("Creating poll for tweet:", insertedTweet.id, "with data:", pollData)
+
         const endsAt = new Date()
         endsAt.setHours(endsAt.getHours() + pollData.durationHours)
 
@@ -211,10 +213,17 @@ export function ComposeTweet({ user, onTweetPosted }: ComposeTweetProps) {
           .select("id")
           .single()
 
-        if (pollError) throw pollError
+        if (pollError) {
+          console.error("Error creating poll:", pollError)
+          throw pollError
+        }
+
+        console.log("Poll created:", pollRecord)
 
         // Create poll options
         const filledOptions = pollData.options.filter((opt) => opt.trim().length > 0)
+        console.log("Creating poll options:", filledOptions)
+
         const optionRecords = filledOptions.map((option, index) => ({
           poll_id: pollRecord.id,
           option_text: option.trim(),
@@ -223,7 +232,12 @@ export function ComposeTweet({ user, onTweetPosted }: ComposeTweetProps) {
 
         const { error: optionsError } = await supabase.from("poll_options").insert(optionRecords)
 
-        if (optionsError) throw optionsError
+        if (optionsError) {
+          console.error("Error creating poll options:", optionsError)
+          throw optionsError
+        }
+
+        console.log("Poll options created successfully")
       }
 
       // Handle mentions after tweet creation
