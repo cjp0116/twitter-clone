@@ -260,11 +260,7 @@ export function TweetCard({ tweet, currentUserId, currentUser, onUpdate }: Tweet
               )}
 
               {/* Poll Display */}
-              <PollDisplay
-                tweetId={tweet.id}
-                currentUserId={currentUserId}
-              />
-              
+              <PollDisplay tweetId={tweet.id} currentUserId={currentUserId} />
 
               <div className="flex items-center justify-between max-w-md pt-2">
                 {currentUser && <ReplyDialog tweet={tweet} currentUser={currentUser} onReplyPosted={onUpdate} />}

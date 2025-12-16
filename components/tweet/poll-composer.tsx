@@ -22,13 +22,17 @@ export function PollComposer({ onPollChange, onRemove }: PollComposerProps) {
   const [durationHours, setDurationHours] = useState<number>(24)
 
   const handleOptionChange = (index: number, value: string) => {
-    setOptions(options.map((option, i) => i === index ? value : option))
+    const newOptions = [...options]
+    newOptions[index] = value
+    setOptions(newOptions)
+    updatePoll(newOptions, durationHours)
   }
 
   const addOption = () => {
     if (options.length < 4) {
-      setOptions([...options, ""])
-      updatePoll(options, durationHours)
+      const newOptions = [...options, ""]
+      setOptions(newOptions)
+      updatePoll(newOptions, durationHours)
     }
   }
 
@@ -47,16 +51,23 @@ export function PollComposer({ onPollChange, onRemove }: PollComposerProps) {
   }
 
   const updatePoll = (opts: string[], hours: number) => {
-    const filledOptions = opts.filter(opt => opt.trim().length > 0)
-    if (filledOptions.length > 1) {
-      onPollChange({
+    // Only send poll data if at least 2 options have text
+    const filledOptions = opts.filter((opt) => opt.trim().length > 0)
+    console.log("PollComposer updatePoll - options:", opts, "filled:", filledOptions.length)
+
+    if (filledOptions.length >= 2) {
+      const pollData = {
         options: opts,
-        durationHours: hours
-      })
+        durationHours: hours,
+      }
+      console.log("PollComposer sending poll data:", pollData)
+      onPollChange(pollData)
     } else {
+      console.log("PollComposer: Not enough options, sending null")
       onPollChange(null)
     }
   }
+
   return (
     <div className="border border-gray-700 rounded-lg p-4 space-y-3">
       <div className="flex items-center justify-between">
@@ -65,7 +76,6 @@ export function PollComposer({ onPollChange, onRemove }: PollComposerProps) {
           <X className="h-4 w-4" />
         </Button>
       </div>
-
 
       {/* Poll Options */}
       <div className="space-y-2">
@@ -102,17 +112,17 @@ export function PollComposer({ onPollChange, onRemove }: PollComposerProps) {
       {/* Duration Selector */}
       <div className="space-y-2">
         <Label className="text-sm">Poll duration</Label>
-        <Input
-          type="number"
-          value={durationHours}
-          onChange={(e) => handleDurationChange(e.target.value)}
-          min={1}
-          max={168}
-          className="w-24"
-        />
-        <span className="text-xs text-muted-foreground">
-          {durationHours} hour{durationHours !== 1 ? "s" : ""}
-        </span>
+        <Select value={durationHours.toString()} onValueChange={handleDurationChange}>
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="1">1 hour</SelectItem>
+            <SelectItem value="24">1 day</SelectItem>
+            <SelectItem value="72">3 days</SelectItem>
+            <SelectItem value="168">7 days</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
     </div>
   )
