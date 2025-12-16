@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef } from "react"
+import { useState, useRef, useImperativeHandle, createRef } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Image as ImageIcon, X, Loader2 } from "lucide-react"
@@ -109,8 +109,8 @@ export function MediaUpload({ onMediaChange, maxFiles = 4 }: MediaUploadProps) {
   }
 
   // Expose upload function to parent
-  React.useImperativeHandle(
-    React.createRef(),
+  useImperativeHandle(
+    createRef<MediaUploadRef | null>(),
     () => ({
       upload: uploadMedia,
     }),
@@ -136,6 +136,7 @@ export function MediaUpload({ onMediaChange, maxFiles = 4 }: MediaUploadProps) {
     <div className="w-full">
       <input
         ref={fileInputRef}
+        aria-label="Upload media"
         type="file"
         accept="image/*,video/*"
         multiple
@@ -168,7 +169,9 @@ export function MediaUpload({ onMediaChange, maxFiles = 4 }: MediaUploadProps) {
               )}
 
               <button
+                type="button"
                 onClick={() => removeMedia(index)}
+                title="Remove media"
                 className="absolute top-2 right-2 bg-gray-900/80 hover:bg-gray-900 text-white rounded-full p-1.5 opacity-0 group-hover:opacity-100 transition-opacity"
                 disabled={uploading}
               >
@@ -190,6 +193,7 @@ export function MediaUpload({ onMediaChange, maxFiles = 4 }: MediaUploadProps) {
           type="button"
           variant="ghost"
           size="icon"
+          title="Upload media"
           onClick={() => fileInputRef.current?.click()}
           disabled={uploading}
           className={mediaFiles.length > 0 ? "mt-2" : ""}

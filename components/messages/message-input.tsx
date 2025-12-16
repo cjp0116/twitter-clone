@@ -192,7 +192,9 @@ export function MessageInput({ user, conversationId, replyToId, onMessageSent }:
             </div>
           )}
           <button
+            type="button"
             onClick={removeMedia}
+            title="Remove media"
             className="absolute -top-2 -right-2 bg-red-500 hover:bg-red-600 text-white rounded-full p-1"
           >
             <X className="w-4 h-4" />
@@ -203,6 +205,7 @@ export function MessageInput({ user, conversationId, replyToId, onMessageSent }:
       <div className="flex items-end gap-2">
         <input
           ref={fileInputRef}
+          aria-label="Upload media"
           type="file"
           accept="image/*,video/*,audio/*,.pdf,.doc,.docx"
           onChange={handleFileSelect}
@@ -214,6 +217,7 @@ export function MessageInput({ user, conversationId, replyToId, onMessageSent }:
           size="icon"
           onClick={() => fileInputRef.current?.click()}
           disabled={uploading || sending}
+          title="Upload media"
         >
           <Image className="w-5 h-5" />
         </Button>

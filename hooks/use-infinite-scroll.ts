@@ -8,28 +8,6 @@ interface UseInfiniteScrollOptions {
   rootMargin?: string // Margin around root, default "0px"
 }
 
-/**
- * Hook for implementing infinite scroll using Intersection Observer
- *
- * @param options Configuration options for infinite scroll
- * @returns Ref to attach to the trigger element (usually the last item or load more indicator)
- *
- * @example
- * ```tsx
- * const loadMoreRef = useInfiniteScroll({
- *   onLoadMore: loadMoreItems,
- *   isLoading,
- *   hasMore
- * })
- *
- * return (
- *   <div>
- *     {items.map(item => <Item key={item.id} {...item} />)}
- *     {hasMore && <div ref={loadMoreRef}>Loading...</div>}
- *   </div>
- * )
- * ```
- */
 export function useInfiniteScroll({
   onLoadMore,
   isLoading,

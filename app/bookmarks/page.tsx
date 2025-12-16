@@ -44,7 +44,7 @@ export default async function BookmarksPage() {
     .eq("user_id", user.id)
     .order("created_at", { ascending: false })
     .limit(20)
-  
+
   if (bookmarksError) {
     console.error("Error fetching bookmarks:", bookmarksError)
   }
@@ -53,10 +53,38 @@ export default async function BookmarksPage() {
   // Supabase returns tweets as an object (not array) for one-to-one relations
   const bookmarkedTweets = (bookmarks?.map((bookmark: any) => bookmark.tweets).filter(Boolean) || []) as any[]
 
+  // Fetch suggested users
+  const { data: suggestedUsers, error: usersError } = await supabase
+    .from("profiles")
+    .select("id, username, display_name, avatar_url")
+    .neq("id", user.id)
+    .order("followers_count", { ascending: false })
+    .limit(5)
+
+  // Check which users the current user is following
+  const suggestedUsersWithFollowStatus = await Promise.all(
+    (suggestedUsers || []).map(async (profile) => {
+      const { data: followData } = await supabase
+        .from("follows")
+        .select("id")
+        .eq("follower_id", user.id)
+        .eq("following_id", profile.id)
+        .single()
+
+      return {
+        id: profile.id,
+        username: profile.username,
+        display_name: profile.display_name,
+        avatar_url: profile.avatar_url,
+        isFollowing: !!followData,
+      }
+    })
+  )
+
   return (
     <AuthenticatedLayout user={user}>
       <SidebarInset>
-        <MainLayout title="Bookmarks" user={user}>
+        <MainLayout title="Bookmarks" user={user} suggestedUsers={suggestedUsersWithFollowStatus}>
           <BookmarksContent
             initialBookmarks={bookmarkedTweets}
             currentUserId={user.id}

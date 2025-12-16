@@ -15,6 +15,7 @@ import { ArrowLeft, Calendar } from "lucide-react"
 import Link from "next/link"
 import { formatDistanceToNow } from "date-fns"
 
+
 interface ProfilePageProps {
   params: {
     username: string
@@ -147,10 +148,38 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
   const isFollowing = !!followData
   const isOwnProfile = user.id === profile.id
 
+  // Fetch suggested users
+  const { data: suggestedUsers, error: usersError } = await supabase
+    .from("profiles")
+    .select("id, username, display_name, avatar_url")
+    .neq("id", user.id)
+    .order("followers_count", { ascending: false })
+    .limit(5)
+
+  // Check which users the current user is following
+  const suggestedUsersWithFollowStatus = await Promise.all(
+    (suggestedUsers || []).map(async (suggestedProfile) => {
+      const { data: followData } = await supabase
+        .from("follows")
+        .select("id")
+        .eq("follower_id", user.id)
+        .eq("following_id", suggestedProfile.id)
+        .single()
+
+      return {
+        id: suggestedProfile.id,
+        username: suggestedProfile.username,
+        display_name: suggestedProfile.display_name,
+        avatar_url: suggestedProfile.avatar_url,
+        isFollowing: !!followData,
+      }
+    })
+  )
+
   return (
     <AuthenticatedLayout user={user}>
       <SidebarInset>
-        <MainLayout title={profile.display_name} user={user}>
+        <MainLayout title={profile.display_name} user={user} suggestedUsers={suggestedUsersWithFollowStatus}>
           {/* Header */}
           <Card className="border-0 border-b rounded-none">
             <CardHeader className="p-4 flex flex-row items-center gap-4">
@@ -183,7 +212,6 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
                     {profile.display_name[0]?.toUpperCase() || "U"}
                   </AvatarFallback>
                 </Avatar>
-
                 <div className="mt-16 flex items-center gap-2">
                   {isOwnProfile ? (
                     <EditProfileButton profile={profile} />

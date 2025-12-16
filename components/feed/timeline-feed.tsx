@@ -183,7 +183,7 @@ export function TimelineFeed({ initialTweets, currentUserId, currentUser }: Time
       </div>
 
       {/* Infinite scroll trigger */}
-      {hasMore && tweets.length > 0 && (
+      {hasMore && filteredTweets.length > 0 && (
         <div ref={loadMoreRef} className="p-4 border-t border-border flex justify-center">
           {isLoading && (
             <div className="flex items-center gap-2 text-muted-foreground">

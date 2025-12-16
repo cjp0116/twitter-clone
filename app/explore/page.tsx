@@ -38,15 +38,35 @@ export default async function ExplorePage() {
 
   const { data: suggestedUsers, error: usersError } = await supabase
     .from("profiles")
-    .select("*")
+    .select("id, username, display_name, avatar_url, bio")
     .neq("id", user.id)
     .order("followers_count", { ascending: false })
     .limit(5)
 
+  // Check which users the current user is following
+  const suggestedUsersWithFollowStatus = await Promise.all(
+    (suggestedUsers || []).map(async (profile) => {
+      const { data: followData } = await supabase
+        .from("follows")
+        .select("id")
+        .eq("follower_id", user.id)
+        .eq("following_id", profile.id)
+        .single()
+
+      return {
+        id: profile.id,
+        username: profile.username,
+        display_name: profile.display_name,
+        avatar_url: profile.avatar_url,
+        isFollowing: !!followData,
+      }
+    })
+  )
+
   return (
     <AuthenticatedLayout user={user}>
       <SidebarInset>
-        <MainLayout title="Explore" user={user}>
+        <MainLayout title="Explore" user={user} suggestedUsers={suggestedUsersWithFollowStatus}>
           <SearchComponent currentUserId={user.id} currentUser={user} />
 
           {/* Trending */}

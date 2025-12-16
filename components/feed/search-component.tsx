@@ -30,7 +30,7 @@ export function SearchComponent({ currentUserId, currentUser }: SearchComponentP
   const [isLoadingMore, setIsLoadingMore] = useState(false)
   const [hasMoreTweets, setHasMoreTweets] = useState(false)
   const [hasMoreUsers, setHasMoreUsers] = useState(false)
-  const supabase = createClient();
+  const supabase = createClient()
 
   // Get blocked and muted users
   const { blockedUserIds, mutedUserIds } = useBlockedMuted(currentUserId)
@@ -79,7 +79,6 @@ export function SearchComponent({ currentUserId, currentUser }: SearchComponentP
       setResults({ tweets: tweets || [], users })
       setHasMoreTweets((tweets?.length || 0) === 20)
       setHasMoreUsers(users.length === 10)
-
     } catch (error) {
       console.error('Search error:', error);
       setResults({ tweets: [], users: [] })

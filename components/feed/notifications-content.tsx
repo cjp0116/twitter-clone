@@ -8,7 +8,6 @@ import { Settings, Heart, UserPlus, Sparkles, AtSign, Loader2 } from "lucide-rea
 import { formatDistanceToNow } from "date-fns"
 import { useInfiniteScroll } from "@/hooks/use-infinite-scroll"
 import { useBlockedMuted } from "@/hooks/use-blocked-muted"
-
 interface Notification {
   id: string
   type: "follow" | "like" | "reply" | "retweet"
@@ -40,7 +39,6 @@ export function NotificationsContent({ user }: NotificationsContentProps) {
   const [loading, setLoading] = useState(true)
   const [isLoadingMore, setIsLoadingMore] = useState(false)
   const [hasMore, setHasMore] = useState(true)
-
   const supabase = createClient()
 
   // Get blocked users to filter notifications
@@ -128,7 +126,6 @@ export function NotificationsContent({ user }: NotificationsContentProps) {
       // Mentions and replies are both modeled as "reply" notifications
       query = query.eq("type", "reply")
     }
-
     const { data, error } = await query
 
     if (error) {
@@ -137,7 +134,6 @@ export function NotificationsContent({ user }: NotificationsContentProps) {
       setNotifications(data || [])
       setHasMore((data?.length || 0) === 20)
     }
-
     setLoading(false)
   }
 
@@ -336,7 +332,7 @@ export function NotificationsContent({ user }: NotificationsContentProps) {
                 </div>
               </div>
             ))}
-            {hasMore && (
+            {hasMore && filteredNotifications.length > 0 && (
               <div ref={loadMoreRef} className="p-4 flex justify-center">
                 {isLoadingMore && (
                   <div className="flex items-center gap-2 text-gray-500">

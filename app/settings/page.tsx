@@ -17,10 +17,38 @@ export default async function SettingsPage() {
     redirect("/auth/login")
   }
 
+  // Fetch suggested users
+  const { data: suggestedUsers, error: usersError } = await supabase
+    .from("profiles")
+    .select("id, username, display_name, avatar_url")
+    .neq("id", user.id)
+    .order("followers_count", { ascending: false })
+    .limit(5)
+
+  // Check which users the current user is following
+  const suggestedUsersWithFollowStatus = await Promise.all(
+    (suggestedUsers || []).map(async (profile) => {
+      const { data: followData } = await supabase
+        .from("follows")
+        .select("id")
+        .eq("follower_id", user.id)
+        .eq("following_id", profile.id)
+        .single()
+
+      return {
+        id: profile.id,
+        username: profile.username,
+        display_name: profile.display_name,
+        avatar_url: profile.avatar_url,
+        isFollowing: !!followData,
+      }
+    })
+  )
+
   return (
     <AuthenticatedLayout user={user}>
       <SidebarInset>
-        <MainLayout title="Settings" user={user}>
+        <MainLayout title="Settings" user={user} suggestedUsers={suggestedUsersWithFollowStatus}>
           {/* Settings Content */}
           <div className="p-6 space-y-6">
             {/* Appearance */}

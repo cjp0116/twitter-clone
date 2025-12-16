@@ -108,7 +108,6 @@ export function TweetCard({ tweet, currentUserId, currentUser, onUpdate }: Tweet
         setQuotedTweet(data)
       }
     }
-
     fetchQuotedTweet()
   }, [tweet.retweet_of_id, tweet.content, supabase])
 
@@ -253,9 +252,9 @@ export function TweetCard({ tweet, currentUserId, currentUser, onUpdate }: Tweet
                 <TweetMediaGallery mediaUrls={tweet.media_urls} mediaTypes={tweet.media_types || []} />
               )}
 
-              {isQuoteTweet && quotedTweet && (
+              {isQuoteTweet && quotedTweet && ( 
                 <div className="mt-3">
-                  <QuotedTweetPreview tweet={quotedTweet} />
+                  <QuotedTweetPreview tweet={quotedTweet} compact={true} />
                 </div>
               )}
 

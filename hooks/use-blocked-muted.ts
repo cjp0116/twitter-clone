@@ -58,7 +58,7 @@ export function useBlockedMuted(currentUserId: string | undefined) {
         },
         () => {
           fetchBlockedAndMuted()
-        }
+        },
       )
       .subscribe()
 
@@ -74,7 +74,7 @@ export function useBlockedMuted(currentUserId: string | undefined) {
         },
         () => {
           fetchBlockedAndMuted()
-        }
+        },
       )
       .subscribe()
 
@@ -93,7 +93,7 @@ export function useBlockedMuted(currentUserId: string | undefined) {
 export function filterBlockedMutedTweets<T extends { author_id: string }>(
   tweets: T[],
   blockedUserIds: string[],
-  mutedUserIds: string[]
+  mutedUserIds: string[],
 ): T[] {
   const excludedIds = new Set([...blockedUserIds, ...mutedUserIds])
   return tweets.filter((tweet) => !excludedIds.has(tweet.author_id))
