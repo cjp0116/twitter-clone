@@ -6,11 +6,11 @@ import { Analytics } from "@vercel/analytics/next"
 import "./globals.css"
 import { ThemeProvider } from "@/components/layout/theme-provider"
 import { Suspense } from "react"
+import Loading from "./loading"
 
 export const metadata: Metadata = {
-  title: "v0 App",
-  description: "Created with v0",
-  generator: "v0.app",
+  title: "Twitter",
+  generator: "Twitter",
 }
 
 const geistSans = GeistSans.variable
@@ -24,7 +24,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${geistSans} ${geistMono} antialiased`} suppressHydrationWarning>
       <body>
-        <Suspense fallback={<div>Loading...</div>}>
+        <Suspense fallback={<Loading />}>
           <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
             {children}
           </ThemeProvider>
