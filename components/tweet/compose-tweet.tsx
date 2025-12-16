@@ -8,7 +8,9 @@ import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { ImageIcon, Smile, X, Loader2 } from "lucide-react"
+import { ImageIcon, Smile, X, Loader2, BarChart3 } from "lucide-react"
+import { PollComposer, type PollData } from '@/components/tweet/poll-composer'
+import { PollDisplay } from '@/components/tweet/poll-display'
 
 interface ComposeTweetProps {
   user: {
@@ -35,6 +37,8 @@ export function ComposeTweet({ user, onTweetPosted }: ComposeTweetProps) {
   const [profile, setProfile] = useState<{ id: string } | null>(null)
   const [mediaFiles, setMediaFiles] = useState<MediaFile[]>([])
   const [uploading, setUploading] = useState(false)
+  const [showPollComposer, setShowPollComposer] = useState(false)
+  const [pollData, setPollData] = useState<PollData | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const supabase = createClient()
 
@@ -230,9 +234,22 @@ export function ComposeTweet({ user, onTweetPosted }: ComposeTweetProps) {
 
   const characterCount = content.length
   const isOverLimit = characterCount > 280
-  const isEmpty = !content.trim() && mediaFiles.length === 0
+  const isEmpty = !content.trim() && mediaFiles.length === 0 && !pollData
 
   const isDisabled = isEmpty || isOverLimit || isPosting || uploading || !profile
+
+  const togglePoll = () => {
+    if (showPollComposer) {
+      setShowPollComposer(false)
+      setPollData(null)
+    } else {
+      setShowPollComposer(true)
+      if (mediaFiles.length > 0) {
+        mediaFiles.forEach(media => URL.revokeObjectURL(media.preview))
+        setMediaFiles([])
+      }
+    }
+  }
 
   const getGridClass = () => {
     switch (mediaFiles.length) {
@@ -308,6 +325,17 @@ export function ComposeTweet({ user, onTweetPosted }: ComposeTweetProps) {
                 </div>
               )}
 
+              {/* Poll Composer */}
+              {showPollComposer && (
+                <PollComposer
+                  onPollChange={(poll) => setPollData(poll)}
+                  onRemove={() => {
+                    setShowPollComposer(false)
+                    setPollData(null)
+                  }}
+                />
+              )}
+
               {error && <div className="text-sm text-destructive bg-destructive/10 p-2 rounded">{error}</div>}
 
               <input
@@ -327,7 +355,10 @@ export function ComposeTweet({ user, onTweetPosted }: ComposeTweetProps) {
                     size="sm"
                     className="text-primary hover:bg-primary/10 p-2 h-auto"
                     onClick={() => fileInputRef.current?.click()}
-                    disabled={mediaFiles.length >= 4 || uploading || isPosting}
+                    disabled={mediaFiles.length >= 4 || uploading || isPosting || showPollComposer}
+
+                    title="Add media"
+
                   >
                     <ImageIcon className="h-5 w-5" />
                   </Button>
@@ -336,8 +367,11 @@ export function ComposeTweet({ user, onTweetPosted }: ComposeTweetProps) {
                     variant="ghost"
                     size="sm"
                     className="text-primary hover:bg-primary/10 p-2 h-auto"
+                    onClick={togglePoll}
+                    disabled={uploading || isPosting || mediaFiles.length > 0}
+                    title="Add poll"
                   >
-                    <Smile className="h-5 w-5" />
+                    <BarChart3 className="h-5 w-5" />
                   </Button>
                 </div>
 

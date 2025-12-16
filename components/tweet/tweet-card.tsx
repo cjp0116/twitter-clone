@@ -16,6 +16,7 @@ import { DeleteTweetDialog } from "@/components/tweet/delete-tweet-dialog"
 import { TweetMediaGallery } from "@/components/tweet/tweet-media-gallery"
 import { QuoteTweetDialog } from "@/components/tweet/quote-tweet-dialog"
 import { QuotedTweetPreview } from "@/components/tweet/quoted-tweet-preview"
+import { PollDisplay } from "@/components/tweet/poll-display"
 import Link from "next/link"
 
 interface Tweet {
@@ -257,6 +258,13 @@ export function TweetCard({ tweet, currentUserId, currentUser, onUpdate }: Tweet
                   <QuotedTweetPreview tweet={quotedTweet} compact={true} />
                 </div>
               )}
+
+              {/* Poll Display */}
+              <PollDisplay
+                tweetId={tweet.id}
+                currentUserId={currentUserId}
+              />
+              
 
               <div className="flex items-center justify-between max-w-md pt-2">
                 {currentUser && <ReplyDialog tweet={tweet} currentUser={currentUser} onReplyPosted={onUpdate} />}
