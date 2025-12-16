@@ -429,6 +429,9 @@ export function ComposeTweet({ user, onTweetPosted }: ComposeTweetProps) {
                     variant="ghost"
                     size="sm"
                     className="text-primary hover:bg-primary/10 p-2 h-auto"
+                    onClick={togglePoll}
+                    disabled={uploading || isPosting || mediaFiles.length > 0}
+                    title="Add poll"
                   >
                     <Smile className="h-5 w-5" />
                   </Button>

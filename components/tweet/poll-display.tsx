@@ -63,6 +63,7 @@ export function PollDisplay({ tweetId, currentUserId }: PollDisplayProps) {
           event: "UPDATE",
           schema: "public",
           table: "poll_options",
+          filter: `poll_id=eq.${poll.id}`,
         },
         () => {
           fetchPollData()

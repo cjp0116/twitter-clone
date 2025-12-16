@@ -57,8 +57,7 @@ export function BookmarkButton({ tweetId, currentUserId, onUpdate }: BookmarkBut
           setIsBookmarked(false)
           toast({
             title: "Bookmark removed",
-            description: "You have removed this tweet from your bookmarks",
-            variant: "default",
+            description: "Tweet removed from your bookmarks",
           })
         } else {
           throw error
@@ -74,9 +73,8 @@ export function BookmarkButton({ tweetId, currentUserId, onUpdate }: BookmarkBut
         if (!error) {
           setIsBookmarked(true)
           toast({
-            title: 'Added to bookmarks',
-            description: 'Tweet saved to your bookmarks',
-            variant: 'default',
+            title: "Tweet bookmarked",
+            description: "Tweet saved to your bookmarks",
           })
         } else {
           throw error
@@ -84,12 +82,13 @@ export function BookmarkButton({ tweetId, currentUserId, onUpdate }: BookmarkBut
       }
       onUpdate?.()
     } catch (error) {
-      console.error('Error toggling bookmark:', error)
+      console.error("Error toggling bookmark:", error)
       toast({
-        title: 'Error',
-        description: 'Failed to update bookmark, try again later',
-        variant: 'destructive',
+        title: "Error",
+        description: "Failed to update bookmark",
+        variant: "destructive",
       })
+    } finally {
       setIsBookmarking(false)
     } 
   }
