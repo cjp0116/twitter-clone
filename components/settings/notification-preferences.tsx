@@ -24,7 +24,7 @@ interface NotificationPreferencesProps {
   userId: string
 }
 
-export default function NotificationPreferences({ userId }: NotificationPreferencesProps) {
+export function NotificationPreferences({ userId }: NotificationPreferencesProps) {
   const [preferences, setPreferences] = useState<NotificationPreferences>({
     likes_enabled: true,
     retweets_enabled: true,
@@ -39,14 +39,20 @@ export default function NotificationPreferences({ userId }: NotificationPreferen
   const [saving, setSaving] = useState(false)
   const supabase = createClient()
   const { toast } = useToast()
+
   useEffect(() => {
     fetchPreferences()
   }, [userId])
-  
+
   const fetchPreferences = async () => {
     try {
-      const { data, error } = await supabase.from("notification_preferences").select("*").eq("user_id", userId).maybeSingle();
-      if (error) throw error;
+      const { data, error } = await supabase
+        .from("notification_preferences")
+        .select("*")
+        .eq("user_id", userId)
+        .maybeSingle()
+
+      if (error) throw error
 
       if (data) {
         setPreferences({
@@ -61,10 +67,10 @@ export default function NotificationPreferences({ userId }: NotificationPreferen
         })
       }
     } catch (error) {
-      console.error("Error fetching notification preferences:", error);
+      console.error("Error fetching preferences:", error)
       toast({
-        title: "Error fetching notification preferences",
-        description: "Please try again later",
+        title: "Error",
+        description: "Failed to load notification preferences",
         variant: "destructive",
       })
     } finally {
@@ -72,30 +78,36 @@ export default function NotificationPreferences({ userId }: NotificationPreferen
     }
   }
 
-  const updatePreferences = async (key: keyof NotificationPreferences, value: boolean) => {
+  const updatePreference = async (key: keyof NotificationPreferences, value: boolean) => {
     setSaving(true)
     try {
       const updatedPreferences = { ...preferences, [key]: value }
       setPreferences(updatedPreferences)
-      const { error } = await supabase.from("notification_preferences")
-        .upsert({
-          user_id: userId,
-          ...updatedPreferences,
-          updated_at: new Date().toISOString(),
-        }, { onConflict: "user_id" })
-      
-      if (error) throw error;
+
+      const { error } = await supabase
+        .from("notification_preferences")
+        .upsert(
+          {
+            user_id: userId,
+            ...updatedPreferences,
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: "user_id" }
+        )
+
+      if (error) throw error
 
       toast({
-        title: 'Saved preferences',
-        description: 'Notification preferences updated'
+        title: "Saved",
+        description: "Notification preferences updated",
       })
     } catch (error) {
-      console.error("Error updating notification preferences:", error);
+      console.error("Error updating preferences:", error)
+      // Revert the change on error
       setPreferences(preferences)
       toast({
-        title: 'Error',
-        description: 'Failed to update preferences',
+        title: "Error",
+        description: "Failed to update preferences",
         variant: "destructive",
       })
     } finally {
@@ -124,12 +136,12 @@ export default function NotificationPreferences({ userId }: NotificationPreferen
         <CardDescription>Choose what notifications you want to receive</CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
-
         {/* Interaction Notifications */}
         <div className="space-y-4">
           <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
             Interactions
           </h3>
+
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <Heart className="h-5 w-5 text-muted-foreground" />
@@ -143,10 +155,11 @@ export default function NotificationPreferences({ userId }: NotificationPreferen
             <Switch
               id="likes"
               checked={preferences.likes_enabled}
-              onCheckedChange={(checked) => updatePreferences("likes_enabled", checked)}
+              onCheckedChange={(checked) => updatePreference("likes_enabled", checked)}
               disabled={saving}
             />
           </div>
+
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <Repeat2 className="h-5 w-5 text-muted-foreground" />
@@ -157,11 +170,10 @@ export default function NotificationPreferences({ userId }: NotificationPreferen
                 <p className="text-sm text-muted-foreground">When someone retweets your tweet</p>
               </div>
             </div>
-
             <Switch
               id="retweets"
               checked={preferences.retweets_enabled}
-              onCheckedChange={(checked) => updatePreferences("retweets_enabled", checked)}
+              onCheckedChange={(checked) => updatePreference("retweets_enabled", checked)}
               disabled={saving}
             />
           </div>
@@ -179,7 +191,7 @@ export default function NotificationPreferences({ userId }: NotificationPreferen
             <Switch
               id="quotes"
               checked={preferences.quote_tweets_enabled}
-              onCheckedChange={(checked) => updatePreferences("quote_tweets_enabled", checked)}
+              onCheckedChange={(checked) => updatePreference("quote_tweets_enabled", checked)}
               disabled={saving}
             />
           </div>
@@ -194,11 +206,10 @@ export default function NotificationPreferences({ userId }: NotificationPreferen
                 <p className="text-sm text-muted-foreground">When someone replies to your tweet</p>
               </div>
             </div>
-
             <Switch
               id="replies"
               checked={preferences.replies_enabled}
-              onCheckedChange={(checked) => updatePreferences("replies_enabled", checked)}
+              onCheckedChange={(checked) => updatePreference("replies_enabled", checked)}
               disabled={saving}
             />
           </div>
@@ -213,11 +224,10 @@ export default function NotificationPreferences({ userId }: NotificationPreferen
                 <p className="text-sm text-muted-foreground">When someone mentions you</p>
               </div>
             </div>
-
             <Switch
               id="mentions"
               checked={preferences.mentions_enabled}
-              onCheckedChange={(checked) => updatePreferences("mentions_enabled", checked)}
+              onCheckedChange={(checked) => updatePreference("mentions_enabled", checked)}
               disabled={saving}
             />
           </div>
@@ -228,6 +238,7 @@ export default function NotificationPreferences({ userId }: NotificationPreferen
         {/* Social Notifications */}
         <div className="space-y-4">
           <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Social</h3>
+
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <UserPlus className="h-5 w-5 text-muted-foreground" />
@@ -238,11 +249,10 @@ export default function NotificationPreferences({ userId }: NotificationPreferen
                 <p className="text-sm text-muted-foreground">When someone follows you</p>
               </div>
             </div>
-
             <Switch
               id="follows"
               checked={preferences.follows_enabled}
-              onCheckedChange={(checked) => updatePreferences("follows_enabled", checked)}
+              onCheckedChange={(checked) => updatePreference("follows_enabled", checked)}
               disabled={saving}
             />
           </div>
@@ -255,6 +265,7 @@ export default function NotificationPreferences({ userId }: NotificationPreferen
           <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
             Delivery
           </h3>
+
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <Bell className="h-5 w-5 text-muted-foreground" />
@@ -268,10 +279,11 @@ export default function NotificationPreferences({ userId }: NotificationPreferen
             <Switch
               id="push"
               checked={preferences.push_notifications}
-              onCheckedChange={(checked) => updatePreferences("push_notifications", checked)}
+              onCheckedChange={(checked) => updatePreference("push_notifications", checked)}
               disabled={saving}
             />
           </div>
+
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <Mail className="h-5 w-5 text-muted-foreground" />
@@ -285,7 +297,7 @@ export default function NotificationPreferences({ userId }: NotificationPreferen
             <Switch
               id="email"
               checked={preferences.email_notifications}
-              onCheckedChange={(checked) => updatePreferences("email_notifications", checked)}
+              onCheckedChange={(checked) => updatePreference("email_notifications", checked)}
               disabled={saving}
             />
           </div>
