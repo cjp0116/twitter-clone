@@ -29,9 +29,10 @@ interface ReplyDialogProps {
     }
   }
   onReplyPosted?: () => void
+  children?: React.ReactNode
 }
 
-export function ReplyDialog({ tweet, currentUser, onReplyPosted }: ReplyDialogProps) {
+export function ReplyDialog({ tweet, currentUser, onReplyPosted, children }: ReplyDialogProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [content, setContent] = useState("")
   const [isPosting, setIsPosting] = useState(false)
@@ -72,13 +73,15 @@ export function ReplyDialog({ tweet, currentUser, onReplyPosted }: ReplyDialogPr
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="text-muted-foreground hover:text-primary hover:bg-primary/10 h-8 px-2"
-        >
-          <MessageCircle className="h-4 w-4 mr-2" />
-        </Button>
+        {children || (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-muted-foreground hover:text-primary hover:bg-primary/10 h-8 px-2"
+          >
+            <MessageCircle className="h-4 w-4 mr-2" />
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>

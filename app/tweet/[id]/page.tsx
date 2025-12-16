@@ -3,15 +3,16 @@ import { createClient } from "@/lib/supabase/server"
 import { AuthenticatedLayout } from "@/components/auth/authenticated-layout"
 import { SidebarInset } from "@/components/ui/sidebar"
 import { MainLayout } from "@/components/layout/main-layout"
-import { TweetDetailContent } from "@/components/tweet/tweet-detail-content"
+import { TweetDetailContent, getRelevantPeople } from "@/components/tweet/tweet-detail-content"
 
 interface TweetPageProps {
-  params: {
+  params: Promise<{
     id: string
-  }
+  }>
 }
 
 export default async function TweetPage({ params }: TweetPageProps) {
+  const { id } = await params
   const supabase = await createClient()
 
   const {
@@ -37,7 +38,7 @@ export default async function TweetPage({ params }: TweetPageProps) {
       )
     `
     )
-    .eq("id", params.id)
+    .eq("id", id)
     .single()
 
   if (tweetError || !tweet) {
@@ -51,10 +52,33 @@ export default async function TweetPage({ params }: TweetPageProps) {
     .eq("id", user.id)
     .single()
 
+  // Fetch relevant people (people who engaged with this tweet)
+  const relevantPeople = await getRelevantPeople(id, supabase)
+
+  // Check which relevant people the current user is following
+  const relevantPeopleWithFollowStatus = await Promise.all(
+    relevantPeople.map(async (profile) => {
+      const { data: followData } = await supabase
+        .from("follows")
+        .select("id")
+        .eq("follower_id", user.id)
+        .eq("following_id", profile.id)
+        .maybeSingle()
+
+      return {
+        id: profile.id,
+        username: profile.username,
+        display_name: profile.display_name,
+        avatar_url: profile.avatar_url,
+        isFollowing: !!followData,
+      }
+    })
+  )
+
   return (
     <AuthenticatedLayout user={user}>
       <SidebarInset>
-        <MainLayout title="Post" user={user} showBackButton>
+        <MainLayout title="Post" user={user} showBackButton suggestedUsers={relevantPeopleWithFollowStatus}>
           <TweetDetailContent
             tweet={tweet}
             currentUserId={user.id}

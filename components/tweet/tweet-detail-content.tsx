@@ -258,179 +258,220 @@ export function TweetDetailContent({ tweet, currentUserId, currentUser }: TweetD
   }
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-      {/* Main Content */}
-      <div className="lg:col-span-2">
-        <Card className="border-0 border-b rounded-none">
-          <CardContent className="p-4 space-y-4">
-            {/* Author Info */}
-            <div className="flex items-center gap-3">
-              <Link href={`/profile/${tweet.profiles.username}`}>
-                <Avatar className="h-12 w-12 cursor-pointer">
-                  <AvatarImage src={tweet.profiles.avatar_url || "/placeholder.svg"} />
-                  <AvatarFallback className="bg-primary text-primary-foreground">
-                    {tweet.profiles.display_name[0]?.toUpperCase() || "U"}
-                  </AvatarFallback>
-                </Avatar>
-              </Link>
-              <div>
-                <Link href={`/profile/${tweet.profiles.username}`} className="hover:underline">
-                  <p className="font-semibold text-foreground">{tweet.profiles.display_name}</p>
-                </Link>
-                <p className="text-muted-foreground">@{tweet.profiles.username}</p>
-              </div>
+    <Card className="border-0 border-b rounded-none">
+      <CardContent className="p-4 space-y-4">
+        {/* Author Info */}
+        <div className="flex items-center gap-3">
+          <Link href={`/profile/${tweet.profiles.username}`}>
+            <Avatar className="h-12 w-12 cursor-pointer">
+              <AvatarImage src={tweet.profiles.avatar_url || "/placeholder.svg"} />
+              <AvatarFallback className="bg-primary text-primary-foreground">
+                {tweet.profiles.display_name[0]?.toUpperCase() || "U"}
+              </AvatarFallback>
+            </Avatar>
+          </Link>
+          <div>
+            <Link href={`/profile/${tweet.profiles.username}`} className="hover:underline">
+              <p className="font-semibold text-foreground">{tweet.profiles.display_name}</p>
+            </Link>
+            <p className="text-muted-foreground">@{tweet.profiles.username}</p>
+          </div>
+        </div>
+
+        {/* Tweet Content */}
+        {tweet.content && (
+          <div className="text-foreground text-xl leading-relaxed break-words">{renderContent(tweet.content)}</div>
+        )}
+
+        {/* Media */}
+        {tweet.media_urls && tweet.media_urls.length > 0 && (
+          <TweetMediaGallery mediaUrls={tweet.media_urls} mediaTypes={tweet.media_types || []} />
+        )}
+
+        {/* Quote Tweet */}
+        {isQuoteTweet && quotedTweet && (
+          <div className="mt-3">
+            <QuotedTweetPreview tweet={quotedTweet} />
+          </div>
+        )}
+
+        {/* Poll */}
+        <PollDisplay tweetId={tweet.id} currentUserId={currentUserId} />
+
+        {/* Timestamp */}
+        <p className="text-muted-foreground text-sm">
+          {new Date(tweet.created_at).toLocaleTimeString("en-US", {
+            hour: "numeric",
+            minute: "2-digit",
+            hour12: true,
+          })}{" "}
+          ·{" "}
+          {new Date(tweet.created_at).toLocaleDateString("en-US", {
+            month: "short",
+            day: "numeric",
+            year: "numeric",
+          })}
+        </p>
+
+        <Separator />
+
+        {/* Engagement Stats */}
+        <div className="flex items-center gap-6 text-sm">
+          <div className="flex items-center gap-1">
+            <Eye className="h-4 w-4 text-muted-foreground" />
+            <span className="font-semibold">{viewCount.toLocaleString()}</span>
+            <span className="text-muted-foreground">Views</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <span className="font-semibold">{tweet.retweets_count}</span>
+            <span className="text-muted-foreground">Retweets</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <span className="font-semibold">{likesCount}</span>
+            <span className="text-muted-foreground">Likes</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <span className="font-semibold">{tweet.replies_count}</span>
+            <span className="text-muted-foreground">Replies</span>
+          </div>
+        </div>
+
+        <Separator />
+
+        {/* Action Buttons */}
+        <div className="flex items-center justify-around">
+          <ReplyDialog tweet={tweet} currentUser={currentUser} onReplyPosted={() => window.location.reload()} />
+
+          <RetweetButton tweetId={tweet.id} currentUserId={currentUserId} initialRetweetCount={tweet.retweets_count} />
+
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleLike}
+            disabled={isLiking}
+            className={`h-10 px-4 ${
+              isLiked
+                ? "text-red-600 hover:text-red-700 hover:bg-red-600/10"
+                : "text-muted-foreground hover:text-red-600 hover:bg-red-600/10"
+            }`}
+          >
+            <Heart className={`h-5 w-5 ${isLiked ? "fill-current" : ""}`} />
+          </Button>
+
+          <BookmarkButton tweetId={tweet.id} currentUserId={currentUserId} />
+        </div>
+
+        <Separator />
+
+        {/* Reply Composer */}
+        <div className="py-4">
+          <div className="flex gap-3">
+            <Avatar className="h-10 w-10">
+              <AvatarImage src="/placeholder.svg" />
+              <AvatarFallback className="bg-primary text-primary-foreground">
+                {currentUser.user_metadata?.display_name?.[0]?.toUpperCase() || "U"}
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex-1">
+              <ReplyDialog tweet={tweet} currentUser={currentUser} onReplyPosted={() => window.location.reload()}>
+                <Button variant="outline" className="w-full justify-start text-muted-foreground">
+                  Post your reply
+                </Button>
+              </ReplyDialog>
             </div>
+          </div>
+        </div>
 
-            {/* Tweet Content */}
-            {tweet.content && (
-              <div className="text-foreground text-xl leading-relaxed break-words">{renderContent(tweet.content)}</div>
-            )}
+        <Separator />
 
-            {/* Media */}
-            {tweet.media_urls && tweet.media_urls.length > 0 && (
-              <TweetMediaGallery mediaUrls={tweet.media_urls} mediaTypes={tweet.media_types || []} />
-            )}
-
-            {/* Quote Tweet */}
-            {isQuoteTweet && quotedTweet && (
-              <div className="mt-3">
-                <QuotedTweetPreview tweet={quotedTweet} />
-              </div>
-            )}
-
-            {/* Poll */}
-            <PollDisplay tweetId={tweet.id} currentUserId={currentUserId} />
-
-            {/* Timestamp */}
-            <p className="text-muted-foreground text-sm">
-              {new Date(tweet.created_at).toLocaleTimeString("en-US", {
-                hour: "numeric",
-                minute: "2-digit",
-                hour12: true,
-              })}{" "}
-              ·{" "}
-              {new Date(tweet.created_at).toLocaleDateString("en-US", {
-                month: "short",
-                day: "numeric",
-                year: "numeric",
-              })}
-            </p>
-
-            <Separator />
-
-            {/* Engagement Stats */}
-            <div className="flex items-center gap-6 text-sm">
-              <div className="flex items-center gap-1">
-                <Eye className="h-4 w-4 text-muted-foreground" />
-                <span className="font-semibold">{viewCount.toLocaleString()}</span>
-                <span className="text-muted-foreground">Views</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <span className="font-semibold">{tweet.retweets_count}</span>
-                <span className="text-muted-foreground">Retweets</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <span className="font-semibold">{likesCount}</span>
-                <span className="text-muted-foreground">Likes</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <span className="font-semibold">{tweet.replies_count}</span>
-                <span className="text-muted-foreground">Replies</span>
-              </div>
-            </div>
-
-            <Separator />
-
-            {/* Action Buttons */}
-            <div className="flex items-center justify-around">
-              <ReplyDialog tweet={tweet} currentUser={currentUser} />
-
-              <RetweetButton tweetId={tweet.id} currentUserId={currentUserId} initialRetweetCount={tweet.retweets_count} />
-
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleLike}
-                disabled={isLiking}
-                className={`h-10 px-4 ${
-                  isLiked
-                    ? "text-red-600 hover:text-red-700 hover:bg-red-600/10"
-                    : "text-muted-foreground hover:text-red-600 hover:bg-red-600/10"
-                }`}
-              >
-                <Heart className={`h-5 w-5 ${isLiked ? "fill-current" : ""}`} />
-              </Button>
-
-              <BookmarkButton tweetId={tweet.id} currentUserId={currentUserId} />
-            </div>
-
-            <Separator />
-
-            {/* Replies Section */}
-            <div className="space-y-4">
-              <h3 className="font-semibold text-lg">Replies</h3>
-              {replies.length > 0 ? (
-                replies.map((reply) => (
-                  <Card key={reply.id} className="border rounded-lg p-4">
-                    <div className="flex gap-3">
-                      <Link href={`/profile/${reply.profiles.username}`}>
-                        <Avatar className="h-10 w-10">
-                          <AvatarImage src={reply.profiles.avatar_url || "/placeholder.svg"} />
-                          <AvatarFallback>{reply.profiles.display_name[0]?.toUpperCase()}</AvatarFallback>
-                        </Avatar>
-                      </Link>
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2">
-                          <Link href={`/profile/${reply.profiles.username}`}>
-                            <span className="font-semibold hover:underline">{reply.profiles.display_name}</span>
-                          </Link>
-                          <span className="text-muted-foreground">@{reply.profiles.username}</span>
-                          <span className="text-muted-foreground">·</span>
-                          <span className="text-muted-foreground text-sm">
-                            {formatDistanceToNow(new Date(reply.created_at), { addSuffix: true })}
-                          </span>
-                        </div>
-                        {reply.content && (
-                          <p className="text-foreground mt-1 break-words">{renderContent(reply.content)}</p>
-                        )}
-                      </div>
-                    </div>
-                  </Card>
-                ))
-              ) : (
-                <p className="text-muted-foreground text-center py-8">No replies yet</p>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Relevant People Sidebar */}
-      <div className="hidden lg:block">
-        <Card>
-          <CardContent className="p-4">
-            <h3 className="font-semibold text-lg mb-4">Relevant people</h3>
-            {relevantPeople.length > 0 ? (
-              <div className="space-y-3">
-                {relevantPeople.map((person) => (
-                  <Link key={person.id} href={`/profile/${person.username}`} className="flex items-center gap-3 hover:bg-muted/50 p-2 rounded-lg transition-colors">
+        {/* Replies Section */}
+        <div className="space-y-4">
+          <h3 className="font-semibold text-lg">Replies</h3>
+          {replies.length > 0 ? (
+            replies.map((reply) => (
+              <Card key={reply.id} className="border rounded-lg p-4 hover:bg-muted/30 transition-colors">
+                <div className="flex gap-3">
+                  <Link href={`/profile/${reply.profiles.username}`}>
                     <Avatar className="h-10 w-10">
-                      <AvatarImage src={person.avatar_url || "/placeholder.svg"} />
-                      <AvatarFallback>{person.display_name[0]?.toUpperCase()}</AvatarFallback>
+                      <AvatarImage src={reply.profiles.avatar_url || "/placeholder.svg"} />
+                      <AvatarFallback>{reply.profiles.display_name[0]?.toUpperCase()}</AvatarFallback>
                     </Avatar>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-semibold truncate">{person.display_name}</p>
-                      <p className="text-sm text-muted-foreground truncate">@{person.username}</p>
-                    </div>
                   </Link>
-                ))}
-              </div>
-            ) : (
-              <p className="text-muted-foreground text-sm">No engagements yet</p>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-    </div>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <Link href={`/profile/${reply.profiles.username}`}>
+                        <span className="font-semibold hover:underline">{reply.profiles.display_name}</span>
+                      </Link>
+                      <span className="text-muted-foreground">@{reply.profiles.username}</span>
+                      <span className="text-muted-foreground">·</span>
+                      <span className="text-muted-foreground text-sm">
+                        {formatDistanceToNow(new Date(reply.created_at), { addSuffix: true })}
+                      </span>
+                    </div>
+                    {reply.content && (
+                      <p className="text-foreground mt-1 break-words">{renderContent(reply.content)}</p>
+                    )}
+                  </div>
+                </div>
+              </Card>
+            ))
+          ) : (
+            <p className="text-muted-foreground text-center py-8">No replies yet. Be the first to reply!</p>
+          )}
+        </div>
+      </CardContent>
+    </Card>
   )
+}
+
+// Export relevant people data for the page to use in sidebar
+export interface RelevantPerson {
+  id: string
+  username: string
+  display_name: string
+  avatar_url: string | null
+}
+
+export async function getRelevantPeople(tweetId: string, supabase: any): Promise<RelevantPerson[]> {
+  // Get people who liked, retweeted, or replied
+  const { data: likers } = await supabase
+    .from("likes")
+    .select("user_id, profiles(id, username, display_name, avatar_url)")
+    .eq("tweet_id", tweetId)
+    .limit(5)
+
+  const { data: retweeters } = await supabase
+    .from("tweets")
+    .select("author_id, profiles(id, username, display_name, avatar_url)")
+    .eq("retweet_of_id", tweetId)
+    .limit(5)
+
+  const { data: repliers } = await supabase
+    .from("tweets")
+    .select("author_id, profiles(id, username, display_name, avatar_url)")
+    .eq("reply_to_id", tweetId)
+    .limit(5)
+
+  // Combine and dedupe
+  const peopleMap = new Map()
+
+  likers?.forEach((like: any) => {
+    if (like.profiles) {
+      peopleMap.set(like.profiles.id, like.profiles)
+    }
+  })
+
+  retweeters?.forEach((retweet: any) => {
+    if (retweet.profiles) {
+      peopleMap.set(retweet.profiles.id, retweet.profiles)
+    }
+  })
+
+  repliers?.forEach((reply: any) => {
+    if (reply.profiles) {
+      peopleMap.set(reply.profiles.id, reply.profiles)
+    }
+  })
+
+  return Array.from(peopleMap.values()).slice(0, 5)
 }
