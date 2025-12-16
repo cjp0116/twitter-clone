@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Bookmark } from "lucide-react"
+import { useToast } from "@/hooks/use-toast"
 
 interface BookmarkButtonProps {
   tweetId: string
@@ -15,6 +16,7 @@ export function BookmarkButton({ tweetId, currentUserId, onUpdate }: BookmarkBut
   const [isBookmarked, setIsBookmarked] = useState(false)
   const [isBookmarking, setIsBookmarking] = useState(false)
   const supabase = createClient()
+  const { toast } = useToast()
 
   // Check if tweet is already bookmarked on mount
   useEffect(() => {
@@ -53,25 +55,45 @@ export function BookmarkButton({ tweetId, currentUserId, onUpdate }: BookmarkBut
 
         if (!error) {
           setIsBookmarked(false)
+          toast({
+            title: "Bookmark removed",
+            description: "You have removed this tweet from your bookmarks",
+            variant: "default",
+          })
+        } else {
+          throw error
         }
       } else {
         // Add bookmark
-        const { error } = await supabase.from("bookmarks").insert({
-          user_id: currentUserId,
-          tweet_id: tweetId,
-        })
+        const { error } = await supabase.from('bookmarks')
+          .insert({
+            user_id: currentUserId,
+            tweet_id: tweetId,
+          })
 
         if (!error) {
           setIsBookmarked(true)
+          toast({
+            title: 'Added to bookmarks',
+            description: 'Tweet saved to your bookmarks',
+            variant: 'default',
+          })
+        } else {
+          throw error
         }
       }
       onUpdate?.()
     } catch (error) {
-      console.error("Error toggling bookmark:", error)
-    } finally {
+      console.error('Error toggling bookmark:', error)
+      toast({
+        title: 'Error',
+        description: 'Failed to update bookmark, try again later',
+        variant: 'destructive',
+      })
       setIsBookmarking(false)
-    }
+    } 
   }
+
 
   return (
     <Button
@@ -88,4 +110,3 @@ export function BookmarkButton({ tweetId, currentUserId, onUpdate }: BookmarkBut
     </Button>
   )
 }
-

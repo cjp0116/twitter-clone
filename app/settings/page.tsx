@@ -5,6 +5,7 @@ import { ThemeToggle } from "@/components/layout/theme-toggle"
 import { AuthenticatedLayout } from "@/components/auth/authenticated-layout"
 import { SidebarInset } from "@/components/ui/sidebar"
 import { MainLayout } from "@/components/layout/main-layout"
+import NotificationPreferences from "@/components/settings/notification-preferences"
 
 export default async function SettingsPage() {
   const supabase = await createClient()
@@ -83,6 +84,9 @@ export default async function SettingsPage() {
                 </div>
               </CardContent>
             </Card>
+
+            {/* Notification Preferences */}
+            <NotificationPreferences userId={user.id} />
 
             {/* Privacy & Safety */}
             <Card>

@@ -5,6 +5,7 @@ import { GeistMono } from "geist/font/mono"
 import { Analytics } from "@vercel/analytics/next"
 import "./globals.css"
 import { ThemeProvider } from "@/components/layout/theme-provider"
+import { Toaster } from "@/components/ui/toaster"
 import { Suspense } from "react"
 import Loading from "./loading"
 
@@ -27,6 +28,7 @@ export default function RootLayout({
         <Suspense fallback={<Loading />}>
           <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
             {children}
+            <Toaster />
           </ThemeProvider>
           <Analytics />
         </Suspense>
