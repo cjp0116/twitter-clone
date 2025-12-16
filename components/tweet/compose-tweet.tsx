@@ -8,7 +8,8 @@ import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { ImageIcon, Smile, X, Loader2 } from "lucide-react"
+import { ImageIcon, Smile, X, Loader2, BarChart3 } from "lucide-react"
+import { PollComposer, type PollData } from "./poll-composer"
 
 interface ComposeTweetProps {
   user: {
@@ -35,6 +36,8 @@ export function ComposeTweet({ user, onTweetPosted }: ComposeTweetProps) {
   const [profile, setProfile] = useState<{ id: string } | null>(null)
   const [mediaFiles, setMediaFiles] = useState<MediaFile[]>([])
   const [uploading, setUploading] = useState(false)
+  const [showPollComposer, setShowPollComposer] = useState(false)
+  const [pollData, setPollData] = useState<PollData | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const supabase = createClient()
 
@@ -170,7 +173,14 @@ export function ComposeTweet({ user, onTweetPosted }: ComposeTweetProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if ((!content.trim() && mediaFiles.length === 0) || content.length > 280 || !profile) return
+
+    console.log("=== Tweet Submit Debug ===")
+    console.log("Content:", content)
+    console.log("Media files:", mediaFiles.length)
+    console.log("Poll data:", pollData)
+    console.log("=========================")
+
+    if ((!content.trim() && mediaFiles.length === 0 && !pollData) || content.length > 280 || !profile) return
 
     setIsPosting(true)
     setError(null)
@@ -192,6 +202,50 @@ export function ComposeTweet({ user, onTweetPosted }: ComposeTweetProps) {
       if (error) throw error
 
       const insertedTweet = insertedTweets?.[0]
+
+      // Create poll if poll data exists
+      if (insertedTweet && pollData) {
+        console.log("Creating poll for tweet:", insertedTweet.id, "with data:", pollData)
+
+        const endsAt = new Date()
+        endsAt.setHours(endsAt.getHours() + pollData.durationHours)
+
+        const { data: pollRecord, error: pollError } = await supabase
+          .from("polls")
+          .insert({
+            tweet_id: insertedTweet.id,
+            duration_hours: pollData.durationHours,
+            ends_at: endsAt.toISOString(),
+          })
+          .select("id")
+          .single()
+
+        if (pollError) {
+          console.error("Error creating poll:", pollError)
+          throw pollError
+        }
+
+        console.log("Poll created:", pollRecord)
+
+        // Create poll options
+        const filledOptions = pollData.options.filter((opt) => opt.trim().length > 0)
+        console.log("Creating poll options:", filledOptions)
+
+        const optionRecords = filledOptions.map((option, index) => ({
+          poll_id: pollRecord.id,
+          option_text: option.trim(),
+          position: index,
+        }))
+
+        const { error: optionsError } = await supabase.from("poll_options").insert(optionRecords)
+
+        if (optionsError) {
+          console.error("Error creating poll options:", optionsError)
+          throw optionsError
+        }
+
+        console.log("Poll options created successfully")
+      }
 
       // Handle mentions after tweet creation
       if (insertedTweet && insertedTweet.content) {
@@ -219,6 +273,8 @@ export function ComposeTweet({ user, onTweetPosted }: ComposeTweetProps) {
 
       setContent("")
       setMediaFiles([])
+      setPollData(null)
+      setShowPollComposer(false)
       onTweetPosted?.()
     } catch (error) {
       console.error("Error posting tweet:", error)
@@ -230,9 +286,23 @@ export function ComposeTweet({ user, onTweetPosted }: ComposeTweetProps) {
 
   const characterCount = content.length
   const isOverLimit = characterCount > 280
-  const isEmpty = !content.trim() && mediaFiles.length === 0
+  const isEmpty = !content.trim() && mediaFiles.length === 0 && !pollData
 
   const isDisabled = isEmpty || isOverLimit || isPosting || uploading || !profile
+
+  const togglePoll = () => {
+    if (showPollComposer) {
+      setShowPollComposer(false)
+      setPollData(null)
+    } else {
+      setShowPollComposer(true)
+      // Clear media when adding poll (polls and media are mutually exclusive)
+      if (mediaFiles.length > 0) {
+        mediaFiles.forEach((media) => URL.revokeObjectURL(media.preview))
+        setMediaFiles([])
+      }
+    }
+  }
 
   const getGridClass = () => {
     switch (mediaFiles.length) {
@@ -308,6 +378,17 @@ export function ComposeTweet({ user, onTweetPosted }: ComposeTweetProps) {
                 </div>
               )}
 
+              {/* Poll Composer */}
+              {showPollComposer && (
+                <PollComposer
+                  onPollChange={(poll) => setPollData(poll)}
+                  onRemove={() => {
+                    setShowPollComposer(false)
+                    setPollData(null)
+                  }}
+                />
+              )}
+
               {error && <div className="text-sm text-destructive bg-destructive/10 p-2 rounded">{error}</div>}
 
               <input
@@ -327,9 +408,21 @@ export function ComposeTweet({ user, onTweetPosted }: ComposeTweetProps) {
                     size="sm"
                     className="text-primary hover:bg-primary/10 p-2 h-auto"
                     onClick={() => fileInputRef.current?.click()}
-                    disabled={mediaFiles.length >= 4 || uploading || isPosting}
+                    disabled={mediaFiles.length >= 4 || uploading || isPosting || showPollComposer}
+                    title="Add media"
                   >
                     <ImageIcon className="h-5 w-5" />
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="text-primary hover:bg-primary/10 p-2 h-auto"
+                    onClick={togglePoll}
+                    disabled={uploading || isPosting || mediaFiles.length > 0}
+                    title="Add poll"
+                  >
+                    <BarChart3 className="h-5 w-5" />
                   </Button>
                   <Button
                     type="button"
