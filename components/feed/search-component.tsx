@@ -4,14 +4,13 @@ import { useState, useEffect, useCallback, useMemo } from 'react'
 import { Input } from '@/components/ui/input'
 import { Card } from '@/components/ui/card'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { TweetCard } from '@/components/tweet-card'
+import { TweetCard } from '@/components/tweet/tweet-card'
 import { Search, Loader2, User } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { useInfiniteScroll } from '@/hooks/use-infinite-scroll'
 import { useBlockedMuted, filterBlockedMutedTweets } from '@/hooks/use-blocked-muted'
-
 
 interface SearchResult {
   tweets: any[]
@@ -31,8 +30,9 @@ export function SearchComponent({ currentUserId, currentUser }: SearchComponentP
   const [isLoadingMore, setIsLoadingMore] = useState(false)
   const [hasMoreTweets, setHasMoreTweets] = useState(false)
   const [hasMoreUsers, setHasMoreUsers] = useState(false)
+  const supabase = createClient()
 
-  const supabase = createClient();
+  // Get blocked and muted users
   const { blockedUserIds, mutedUserIds } = useBlockedMuted(currentUserId)
 
   // Filter results to exclude blocked/muted users
@@ -98,6 +98,7 @@ export function SearchComponent({ currentUserId, currentUser }: SearchComponentP
 
   const loadMoreTweets = useCallback(async () => {
     if (isLoadingMore || !query.trim()) return
+
     setIsLoadingMore(true)
     try {
       const isHashtagSearch = query.trim().startsWith('#')
@@ -124,10 +125,9 @@ export function SearchComponent({ currentUserId, currentUser }: SearchComponentP
     }
   }, [supabase, query, results.tweets.length, isLoadingMore])
 
-
-
   const loadMoreUsers = useCallback(async () => {
     if (isLoadingMore || !query.trim() || query.trim().startsWith('#')) return
+
     setIsLoadingMore(true)
     try {
       const { data: users, error } = await supabase
@@ -239,10 +239,10 @@ export function SearchComponent({ currentUserId, currentUser }: SearchComponentP
                   />
                 ))}
                 {hasMoreTweets && (
-                  <div ref={loadMoreTweetsRef} className='p-4 flex justify-center'>
+                  <div ref={loadMoreTweetsRef} className="p-4 flex justify-center">
                     {isLoadingMore && (
                       <div className="flex items-center gap-2 text-muted-foreground">
-                        <Loader2 className='h-2 w-4 animate-spin' />
+                        <Loader2 className="h-4 w-4 animate-spin" />
                         <span>Loading more tweets...</span>
                       </div>
                     )}

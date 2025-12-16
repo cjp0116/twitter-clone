@@ -3,8 +3,8 @@
 import { useState, useEffect, useRef } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { MessageInput } from "@/components/message-input"
-import { MessageItem } from "@/components/message-item"
+import { MessageInput } from "@/components/messages/message-input"
+import { MessageItem } from "@/components/messages/message-item"
 import { Loader2 } from "lucide-react"
 import { formatDistanceToNow } from "date-fns"
 

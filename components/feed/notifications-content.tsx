@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Settings, Heart, UserPlus, Sparkles, AtSign, Loader2 } from "lucide-react"
 import { formatDistanceToNow } from "date-fns"
 import { useInfiniteScroll } from "@/hooks/use-infinite-scroll"
-import { useBlockedMuted, filterBlockedMutedTweets } from "@/hooks/use-blocked-muted"
+import { useBlockedMuted } from "@/hooks/use-blocked-muted"
 interface Notification {
   id: string
   type: "follow" | "like" | "reply" | "retweet"
@@ -39,9 +39,16 @@ export function NotificationsContent({ user }: NotificationsContentProps) {
   const [loading, setLoading] = useState(true)
   const [isLoadingMore, setIsLoadingMore] = useState(false)
   const [hasMore, setHasMore] = useState(true)
-  const { blockedUserIds } = useBlockedMuted(user.id)
-  const filteredNotifications = useMemo(() => notifications.filter(notif => !blockedUserIds.includes(notif.actor_id)), [notifications, blockedUserIds]);
   const supabase = createClient()
+
+  // Get blocked users to filter notifications
+  const { blockedUserIds } = useBlockedMuted(user.id)
+
+  // Filter notifications to exclude blocked users
+  const filteredNotifications = useMemo(
+    () => notifications.filter((notif) => !blockedUserIds.includes(notif.actor_id)),
+    [notifications, blockedUserIds]
+  )
 
   useEffect(() => {
     fetchNotifications()
@@ -115,8 +122,6 @@ export function NotificationsContent({ user }: NotificationsContentProps) {
       .order("created_at", { ascending: false })
       .limit(20)
 
-
-
     if (activeTab === "mentions") {
       // Mentions and replies are both modeled as "reply" notifications
       query = query.eq("type", "reply")
@@ -134,7 +139,9 @@ export function NotificationsContent({ user }: NotificationsContentProps) {
 
   const fetchMoreNotifications = useCallback(async () => {
     if (isLoadingMore) return
+
     setIsLoadingMore(true)
+
     let query = supabase
       .from("notifications")
       .select(`
@@ -158,6 +165,7 @@ export function NotificationsContent({ user }: NotificationsContentProps) {
       setNotifications((prev) => [...prev, ...(data || [])])
       setHasMore((data?.length || 0) === 20)
     }
+
     setIsLoadingMore(false)
   }, [supabase, user.id, activeTab, notifications.length, isLoadingMore])
 

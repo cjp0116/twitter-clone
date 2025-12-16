@@ -6,7 +6,7 @@ import { useEffect, useState } from "react"
 import { createBrowserClient } from "@supabase/ssr"
 import type { User } from "@supabase/supabase-js"
 import { SidebarProvider } from "@/components/ui/sidebar"
-import { TwitterSidebar } from "@/components/twitter-sidebar"
+import { TwitterSidebar } from "@/components/layout/twitter-sidebar"
 
 interface AuthenticatedLayoutProps {
   children: React.ReactNode

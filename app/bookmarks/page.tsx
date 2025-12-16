@@ -1,8 +1,8 @@
 import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
-import { BookmarksContent } from '@/components/bookmarks-content';
-import { AuthenticatedLayout } from "@/components/authenticated-layout"
-import { MainLayout } from "@/components/main-layout"
+import { BookmarksContent } from "@/components/feed/bookmarks-content"
+import { AuthenticatedLayout } from "@/components/auth/authenticated-layout"
+import { MainLayout } from "@/components/layout/main-layout"
 import { SidebarInset } from "@/components/ui/sidebar"
 
 export default async function BookmarksPage() {
@@ -51,7 +51,7 @@ export default async function BookmarksPage() {
 
   // Extract tweets from bookmarks
   // Supabase returns tweets as an object (not array) for one-to-one relations
-  const bookmarkedTweets = bookmarks?.map((bookmark: any) => bookmark.tweets).filter(Boolean) || []
+  const bookmarkedTweets = (bookmarks?.map((bookmark: any) => bookmark.tweets).filter(Boolean) || []) as any[]
 
   // Fetch suggested users
   const { data: suggestedUsers, error: usersError } = await supabase

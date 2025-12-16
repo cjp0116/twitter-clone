@@ -1,10 +1,10 @@
 import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
-import { ThemeToggle } from "@/components/theme-toggle"
-import { AuthenticatedLayout } from "@/components/authenticated-layout"
+import { ThemeToggle } from "@/components/layout/theme-toggle"
+import { AuthenticatedLayout } from "@/components/auth/authenticated-layout"
 import { SidebarInset } from "@/components/ui/sidebar"
-import { MainLayout } from "@/components/main-layout"
+import { MainLayout } from "@/components/layout/main-layout"
 
 export default async function SettingsPage() {
   const supabase = await createClient()

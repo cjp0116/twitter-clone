@@ -1,9 +1,9 @@
 import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
-import { ComposeTweet } from "@/components/compose-tweet"
-import { TimelineFeed } from "@/components/timeline-feed"
-import { AuthenticatedLayout } from "@/components/authenticated-layout"
-import { MainLayout } from "@/components/main-layout"
+import { ComposeTweet } from "@/components/tweet/compose-tweet"
+import { TimelineFeed } from "@/components/feed/timeline-feed"
+import { AuthenticatedLayout } from "@/components/auth/authenticated-layout"
+import { MainLayout } from "@/components/layout/main-layout"
 import { SidebarInset } from "@/components/ui/sidebar"
 
 export default async function HomePage() {

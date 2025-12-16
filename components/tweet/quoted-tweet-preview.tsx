@@ -1,9 +1,10 @@
+"use client"
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Card, CardContent } from "@/components/ui/card"
 import { formatDistanceToNow } from "date-fns"
 import Link from "next/link"
-import { TweetMediaGallery } from "@/components/tweet-media-gallery"
+import { TweetMediaGallery } from "@/components/tweet/tweet-media-gallery"
 
 interface QuotedTweetPreviewProps {
   tweet: {
@@ -28,6 +29,7 @@ export function QuotedTweetPreview({ tweet, compact = false }: QuotedTweetPrevie
     if (compact && text.length > 100) {
       return text.slice(0, 100) + "..."
     }
+
     const parts = text.split(/(\s+)/)
 
     return parts.map((part, index) => {
@@ -58,6 +60,7 @@ export function QuotedTweetPreview({ tweet, compact = false }: QuotedTweetPrevie
           </Link>
         )
       }
+
       return <span key={`${part}-${index}`}>{part}</span>
     })
   }
@@ -95,8 +98,9 @@ export function QuotedTweetPreview({ tweet, compact = false }: QuotedTweetPrevie
                 {formatDistanceToNow(new Date(tweet.created_at), { addSuffix: true })}
               </span>
             </div>
+
             {tweet.content && (
-              <div className="text-sm txt-foreground leading-snug break-words">
+              <div className="text-sm text-foreground leading-snug break-words">
                 {renderContent(tweet.content)}
               </div>
             )}
@@ -109,6 +113,7 @@ export function QuotedTweetPreview({ tweet, compact = false }: QuotedTweetPrevie
                 />
               </div>
             )}
+
             {tweet.media_urls && tweet.media_urls.length > 0 && compact && (
               <div className="text-xs text-muted-foreground mt-1">
                 📎 {tweet.media_urls.length} media file{tweet.media_urls.length > 1 ? "s" : ""}
@@ -119,5 +124,4 @@ export function QuotedTweetPreview({ tweet, compact = false }: QuotedTweetPrevie
       </CardContent>
     </Card>
   )
-
 }

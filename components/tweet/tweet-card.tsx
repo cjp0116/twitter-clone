@@ -8,14 +8,14 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Heart, Share, MoreHorizontal, Repeat2, Edit, Trash2 } from "lucide-react"
 import { formatDistanceToNow } from "date-fns"
-import { ReplyDialog } from "@/components/reply-dialog"
-import { RetweetButton } from "@/components/retweet-button"
-import { BookmarkButton } from "@/components/bookmark-button"
-import { EditTweetDialog } from "@/components/edit-tweet-dialog"
-import { DeleteTweetDialog } from "@/components/delete-tweet-dialog"
-import { TweetMediaGallery } from "@/components/tweet-media-gallery"
-import { QuoteTweetDialog } from "@/components/quote-tweet-dialog"
-import { QuotedTweetPreview } from "@/components/quoted-tweet-preview"
+import { ReplyDialog } from "@/components/tweet/reply-dialog"
+import { RetweetButton } from "@/components/interactions/retweet-button"
+import { BookmarkButton } from "@/components/interactions/bookmark-button"
+import { EditTweetDialog } from "@/components/tweet/edit-tweet-dialog"
+import { DeleteTweetDialog } from "@/components/tweet/delete-tweet-dialog"
+import { TweetMediaGallery } from "@/components/tweet/tweet-media-gallery"
+import { QuoteTweetDialog } from "@/components/tweet/quote-tweet-dialog"
+import { QuotedTweetPreview } from "@/components/tweet/quoted-tweet-preview"
 import Link from "next/link"
 
 interface Tweet {
@@ -81,6 +81,7 @@ export function TweetCard({ tweet, currentUserId, currentUser, onUpdate }: Tweet
     void loadLikeState()
   }, [currentUserId, supabase, tweet.id])
 
+  // Fetch quoted tweet if this is a quote tweet
   useEffect(() => {
     if (!tweet.retweet_of_id || !tweet.content) return // Not a quote tweet
 

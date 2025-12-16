@@ -5,7 +5,7 @@ import type { User } from "@supabase/supabase-js"
 import { Card, CardHeader, CardTitle } from "@/components/ui/card"
 import { SidebarTrigger } from "@/components/ui/sidebar"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { FollowButton } from "@/components/follow-button"
+import { FollowButton } from "@/components/interactions/follow-button"
 import Link from "next/link"
 
 interface SuggestedUser {

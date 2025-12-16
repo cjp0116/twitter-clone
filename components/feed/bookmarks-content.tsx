@@ -1,14 +1,10 @@
 "use client"
 
-
-
 import { useState, useEffect, useCallback } from "react"
-
 import { createClient } from "@/lib/supabase/client"
-import { TweetCard } from "@/components/tweet-card"
+import { TweetCard } from "@/components/tweet/tweet-card"
 import { useInfiniteScroll } from "@/hooks/use-infinite-scroll"
 import { Loader2 } from "lucide-react"
-
 
 interface Tweet {
   id: string
@@ -29,8 +25,6 @@ interface Tweet {
   }
 }
 
-
-
 interface BookmarksContentProps {
   initialBookmarks: Tweet[]
   currentUserId: string
@@ -40,17 +34,15 @@ interface BookmarksContentProps {
   }
 }
 
-
-
 export function BookmarksContent({ initialBookmarks, currentUserId, currentUser }: BookmarksContentProps) {
   const [bookmarks, setBookmarks] = useState<Tweet[]>(initialBookmarks)
   const [isLoading, setIsLoading] = useState(false)
   const [hasMore, setHasMore] = useState(initialBookmarks.length === 20)
   const supabase = createClient()
 
-
   const fetchMoreBookmarks = useCallback(async () => {
     if (isLoading) return
+
     setIsLoading(true)
     try {
       const { data: newBookmarks, error } = await supabase
@@ -83,8 +75,7 @@ export function BookmarksContent({ initialBookmarks, currentUserId, currentUser 
 
       if (error) throw error
 
-
-      const newTweets = newBookmarks?.map((bookmark: any) => bookmark.tweets).filter(Boolean) as Tweet[] || []
+      const newTweets = (newBookmarks?.map((bookmark: any) => bookmark.tweets).filter(Boolean) || []) as Tweet[]
       setBookmarks((prev) => [...prev, ...newTweets])
       setHasMore(newTweets.length === 20)
     } catch (error) {
@@ -92,17 +83,13 @@ export function BookmarksContent({ initialBookmarks, currentUserId, currentUser 
     } finally {
       setIsLoading(false)
     }
-
   }, [supabase, currentUserId, bookmarks.length, isLoading])
-
-
 
   const loadMoreRef = useInfiniteScroll({
     onLoadMore: fetchMoreBookmarks,
     isLoading,
     hasMore,
   })
-
 
   // Real-time subscription for bookmark changes
   useEffect(() => {
@@ -127,8 +114,6 @@ export function BookmarksContent({ initialBookmarks, currentUserId, currentUser 
       supabase.removeChannel(channel)
     }
   }, [supabase, currentUserId])
-
-
 
   const fetchInitialBookmarks = async () => {
     const { data: newBookmarks, error } = await supabase
@@ -160,12 +145,11 @@ export function BookmarksContent({ initialBookmarks, currentUserId, currentUser 
       .limit(20)
 
     if (!error && newBookmarks) {
-      const tweets = newBookmarks.map((bookmark: any) => bookmark.tweets).filter(Boolean) as Tweet[]
+      const tweets = (newBookmarks.map((bookmark: any) => bookmark.tweets).filter(Boolean) || []) as Tweet[]
       setBookmarks(tweets)
       setHasMore(tweets.length === 20)
     }
   }
-
 
   return (
     <>

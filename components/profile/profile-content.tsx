@@ -2,11 +2,11 @@
 
 import { useState, useEffect, useCallback, useMemo } from "react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { TweetCard } from "@/components/tweet-card"
+import { TweetCard } from "@/components/tweet/tweet-card"
 import { createClient } from "@/lib/supabase/client"
 import { useInfiniteScroll } from "@/hooks/use-infinite-scroll"
-import { Loader2 } from "lucide-react"
 import { useBlockedMuted, filterBlockedMutedTweets } from "@/hooks/use-blocked-muted"
+import { Loader2 } from "lucide-react"
 
 interface Tweet {
   id: string
@@ -38,10 +38,11 @@ interface ProfileContentProps {
 export function ProfileContent({ tweets: initialTweets, currentUserId, isOwnProfile, username, profileId }: ProfileContentProps) {
   const [activeTab, setActiveTab] = useState("tweets")
   const [tweets, setTweets] = useState<Tweet[]>(initialTweets)
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false)
   const [hasMore, setHasMore] = useState(initialTweets.length === 20)
   const supabase = createClient()
 
+  // Get blocked and muted users
   const { blockedUserIds, mutedUserIds } = useBlockedMuted(currentUserId)
 
   // Filter tweets to exclude blocked/muted users (except for the profile owner's own tweets)
@@ -50,6 +51,7 @@ export function ProfileContent({ tweets: initialTweets, currentUserId, isOwnProf
     [tweets, blockedUserIds, mutedUserIds]
   )
 
+  // Reset tweets when initial tweets change (e.g., profile changed)
   useEffect(() => {
     setTweets(initialTweets)
     setHasMore(initialTweets.length === 20)
@@ -57,26 +59,29 @@ export function ProfileContent({ tweets: initialTweets, currentUserId, isOwnProf
 
   const fetchMoreTweets = useCallback(async () => {
     if (isLoading) return
+
     setIsLoading(true)
     try {
-      const { data: ownTweets, error: tweetsError } = await supabase.from('tweets')
+      // Fetch user's own tweets
+      const { data: ownTweets, error: tweetsError } = await supabase
+        .from("tweets")
         .select(`
           *,
           profiles (
             username,
             display_name,
             avatar_url
-          )  
+          )
         `)
-        .eq('author_id', profileId)
-        .order('created_at', { ascending: false })
+        .eq("author_id", profileId)
+        .order("created_at", { ascending: false })
         .range(tweets.length, tweets.length + 19)
-      
+
       if (tweetsError) throw tweetsError
-      
-      // fetch mentioned tweets
+
+      // Fetch tweets where this user is mentioned
       const { data: mentionedTweets, error: mentionedError } = await supabase
-        .from('tweets')
+        .from("tweets")
         .select(`
           *,
           profiles (
@@ -86,15 +91,15 @@ export function ProfileContent({ tweets: initialTweets, currentUserId, isOwnProf
           ),
           tweet_mentions!inner (
             mentioned_user_id
-          )  
-          `)
-        .eq('tweet_mentions.mentioned_user_id', profileId)
-        .order('created_at', { ascending: false })
+          )
+        `)
+        .eq("tweet_mentions.mentioned_user_id", profileId)
+        .order("created_at", { ascending: false })
         .range(tweets.length, tweets.length + 19)
-      
+
       if (mentionedError) throw mentionedError
-      
-      //combine and dedupe tweets
+
+      // Combine and dedupe tweets
       const tweetsMap = new Map<string, Tweet>()
       for (const t of tweets) {
         tweetsMap.set(t.id, t)
@@ -111,9 +116,8 @@ export function ProfileContent({ tweets: initialTweets, currentUserId, isOwnProf
 
       setTweets(combinedTweets)
       setHasMore((ownTweets?.length || 0) === 20 || (mentionedTweets?.length || 0) === 20)
-
     } catch (error) {
-      console.error('Error fetching more tweets:', error)
+      console.error("Error fetching more tweets:", error)
     } finally {
       setIsLoading(false)
     }
@@ -122,8 +126,9 @@ export function ProfileContent({ tweets: initialTweets, currentUserId, isOwnProf
   const loadMoreRef = useInfiniteScroll({
     onLoadMore: fetchMoreTweets,
     isLoading,
-    hasMore
+    hasMore,
   })
+
   // Filter tweets with media
   const mediaTweets = filteredTweets.filter((tweet) => tweet.media_urls && tweet.media_urls.length > 0)
 

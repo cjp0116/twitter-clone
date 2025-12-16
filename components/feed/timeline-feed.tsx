@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from "react"
 import { createClient } from "@/lib/supabase/client"
-import { TweetCard } from "@/components/tweet-card"
+import { TweetCard } from "@/components/tweet/tweet-card"
 import { Button } from "@/components/ui/button"
 import { RefreshCw, Loader2 } from "lucide-react"
 import { useInfiniteScroll } from "@/hooks/use-infinite-scroll"
@@ -43,8 +43,16 @@ export function TimelineFeed({ initialTweets, currentUserId, currentUser }: Time
   const [hasMore, setHasMore] = useState(true)
   const [newTweetsCount, setNewTweetsCount] = useState(0)
   const supabase = createClient()
+
+  // Get blocked and muted users
   const { blockedUserIds, mutedUserIds } = useBlockedMuted(currentUserId)
-  const filteredTweets = useMemo(() => filterBlockedMutedTweets(tweets, blockedUserIds, mutedUserIds), [tweets, blockedUserIds, mutedUserIds])
+
+  // Filter tweets to exclude blocked/muted users
+  const filteredTweets = useMemo(
+    () => filterBlockedMutedTweets(tweets, blockedUserIds, mutedUserIds),
+    [tweets, blockedUserIds, mutedUserIds]
+  )
+
   const fetchTweets = useCallback(
     async (offset = 0, isRefresh = false) => {
       if (isRefresh) {
@@ -128,11 +136,13 @@ export function TimelineFeed({ initialTweets, currentUserId, currentUser }: Time
     fetchTweets(0, true)
   }, [fetchTweets])
 
+  // Infinite scroll hook
   const loadMoreRef = useInfiniteScroll({
     onLoadMore: loadMore,
     isLoading,
-    hasMore
+    hasMore,
   })
+
   return (
     <div className="space-y-0">
       {/* New tweets notification */}

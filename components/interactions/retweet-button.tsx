@@ -30,27 +30,12 @@ export function RetweetButton({ tweetId, currentUserId, initialRetweetCount, onU
         .eq("retweet_of_id", tweetId)
         .is("content", null) // Plain retweets have null content
         .maybeSingle()
-      
+
       if (!error && data) {
         setIsRetweeted(true)
       }
     }
-    checkRetweetStatus()
-  }, [supabase, currentUserId, tweetId])
-  // Check if user has retweeted this tweet
-  useEffect(() => {
-    const checkRetweetStatus = async () => {
-      const { data, error } = await supabase
-        .from("tweets")
-        .select("id")
-        .eq("author_id", currentUserId)
-        .eq("retweet_of_id", tweetId)
-        .is("content", null) // Plain retweets have null content
-        .maybeSingle()
-      if (!error && data) {
-        setIsRetweeted(true)
-      }
-    }
+
     checkRetweetStatus()
   }, [supabase, currentUserId, tweetId])
 
@@ -79,6 +64,7 @@ export function RetweetButton({ tweetId, currentUserId, initialRetweetCount, onU
           author_id: currentUserId,
           retweet_of_id: tweetId,
         })
+
         if (!error) {
           setIsRetweeted(true)
           setRetweetCount((prev) => prev + 1)
@@ -92,8 +78,6 @@ export function RetweetButton({ tweetId, currentUserId, initialRetweetCount, onU
     }
   }
 
-
-
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -101,10 +85,11 @@ export function RetweetButton({ tweetId, currentUserId, initialRetweetCount, onU
           variant="ghost"
           size="sm"
           disabled={isRetweeting}
-          className={`h-8 px-2 ${isRetweeted
+          className={`h-8 px-2 ${
+            isRetweeted
               ? "text-green-600 hover:text-green-700 hover:bg-green-600/10"
               : "text-muted-foreground hover:text-green-600 hover:bg-green-600/10"
-            }`}
+          }`}
         >
           <Repeat2 className="h-4 w-4 mr-2" />
           <span className="text-sm">{retweetCount}</span>
@@ -123,4 +108,3 @@ export function RetweetButton({ tweetId, currentUserId, initialRetweetCount, onU
     </DropdownMenu>
   )
 }
-

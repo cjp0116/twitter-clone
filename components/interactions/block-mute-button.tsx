@@ -5,7 +5,6 @@ import { createClient } from "@/lib/supabase/client"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu"
 import { Button } from "@/components/ui/button"
 import { MoreHorizontal, Ban, VolumeX, UserMinus, Volume2, UserPlus } from "lucide-react"
-
 import {
   AlertDialog,
   AlertDialogAction,
@@ -31,34 +30,42 @@ export function BlockMuteButton({ targetUserId, targetUsername, currentUserId, o
   const [showBlockDialog, setShowBlockDialog] = useState(false)
   const [showUnblockDialog, setShowUnblockDialog] = useState(false)
   const supabase = createClient()
+
+  // Check block and mute status
   useEffect(() => {
     const checkStatus = async () => {
       try {
-        const { data: blockData } = await supabase.from('blocks')
-          .select('id')
-          .eq('blocker_id', currentUserId)
-          .eq('blocked_id', targetUserId)
+        // Check if blocked
+        const { data: blockData } = await supabase
+          .from("blocks")
+          .select("id")
+          .eq("blocker_id", currentUserId)
+          .eq("blocked_id", targetUserId)
           .maybeSingle()
+
         setIsBlocked(!!blockData)
 
-        const { data: muteData } = await supabase.from('mutes')
-          .select('id')
-          .eq('muter_id', currentUserId)
-          .eq('muted_id', targetUserId)
+        // Check if muted
+        const { data: muteData } = await supabase
+          .from("mutes")
+          .select("id")
+          .eq("muter_id", currentUserId)
+          .eq("muted_id", targetUserId)
           .maybeSingle()
+
         setIsMuted(!!muteData)
       } catch (error) {
-        console.error('Error checking block/mute status:', error)
+        console.error("Error checking block/mute status:", error)
       }
     }
+
     checkStatus()
   }, [supabase, currentUserId, targetUserId])
 
   const handleBlock = async () => {
-    if (isLoading) return
     setIsLoading(true)
     try {
-      const { error } = await supabase.from('blocks').insert({ 
+      const { error } = await supabase.from("blocks").insert({
         blocker_id: currentUserId,
         blocked_id: targetUserId,
       })
@@ -69,17 +76,20 @@ export function BlockMuteButton({ targetUserId, targetUsername, currentUserId, o
         onUpdate?.()
       }
     } catch (error) {
-      console.error('Error blocking user:', error)
+      console.error("Error blocking user:", error)
     } finally {
       setIsLoading(false)
     }
   }
 
   const handleUnblock = async () => {
-    if (isLoading) return
     setIsLoading(true)
     try {
-      const { error } = await supabase.from('blocks').delete().eq('blocker_id', currentUserId).eq('blocked_id', targetUserId)
+      const { error } = await supabase
+        .from("blocks")
+        .delete()
+        .eq("blocker_id", currentUserId)
+        .eq("blocked_id", targetUserId)
 
       if (!error) {
         setIsBlocked(false)
@@ -87,36 +97,41 @@ export function BlockMuteButton({ targetUserId, targetUsername, currentUserId, o
         onUpdate?.()
       }
     } catch (error) {
-      console.error('Error unblocking user:', error)
+      console.error("Error unblocking user:", error)
     } finally {
       setIsLoading(false)
     }
   }
 
   const handleMute = async () => {
-    if (isLoading) return
     setIsLoading(true)
     try {
       if (isMuted) {
-        const { error} = await supabase.from('mutes').delete().eq('muter_id', currentUserId).eq('muted_id', targetUserId)
-   
-  
+        // Unmute
+        const { error } = await supabase
+          .from("mutes")
+          .delete()
+          .eq("muter_id", currentUserId)
+          .eq("muted_id", targetUserId)
+
         if (!error) {
           setIsMuted(false)
           onUpdate?.()
-        } 
+        }
       } else {
-        const { error } = await supabase.from('mutes').insert({
+        // Mute
+        const { error } = await supabase.from("mutes").insert({
           muter_id: currentUserId,
           muted_id: targetUserId,
         })
+
         if (!error) {
           setIsMuted(true)
-          onUpdate?.()        
+          onUpdate?.()
         }
       }
     } catch (error) {
-      console.error('Error muting user:', error)
+      console.error("Error toggling mute:", error)
     } finally {
       setIsLoading(false)
     }
@@ -130,7 +145,6 @@ export function BlockMuteButton({ targetUserId, targetUsername, currentUserId, o
             <MoreHorizontal className="h-5 w-5" />
           </Button>
         </DropdownMenuTrigger>
-
         <DropdownMenuContent align="end" className="w-48">
           <DropdownMenuItem onClick={handleMute} disabled={isLoading || isBlocked}>
             {isMuted ? (
@@ -145,7 +159,9 @@ export function BlockMuteButton({ targetUserId, targetUsername, currentUserId, o
               </>
             )}
           </DropdownMenuItem>
+
           <DropdownMenuSeparator />
+
           {isBlocked ? (
             <DropdownMenuItem
               onClick={() => setShowUnblockDialog(true)}
@@ -173,7 +189,7 @@ export function BlockMuteButton({ targetUserId, targetUsername, currentUserId, o
           <AlertDialogHeader>
             <AlertDialogTitle>Block @{targetUsername}?</AlertDialogTitle>
             <AlertDialogDescription className="space-y-2">
-              <div>They will not be able to:</div>
+              <p>They will not be able to:</p>
               <ul className="list-disc list-inside space-y-1 text-sm">
                 <li>See your tweets or profile</li>
                 <li>Follow you or interact with your tweets</li>
@@ -195,9 +211,7 @@ export function BlockMuteButton({ targetUserId, targetUsername, currentUserId, o
         </AlertDialogContent>
       </AlertDialog>
 
-
       {/* Unblock Confirmation Dialog */}
-
       <AlertDialog open={showUnblockDialog} onOpenChange={setShowUnblockDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
