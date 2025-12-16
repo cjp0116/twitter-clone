@@ -4,6 +4,9 @@ import type React from "react"
 import type { User } from "@supabase/supabase-js"
 import { Card, CardHeader, CardTitle } from "@/components/ui/card"
 import { SidebarTrigger } from "@/components/ui/sidebar"
+import { Button } from "@/components/ui/button"
+import { ArrowLeft } from "lucide-react"
+import { useRouter } from "next/navigation"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { FollowButton } from "@/components/interactions/follow-button"
 import Link from "next/link"
@@ -21,17 +24,33 @@ interface MainLayoutProps {
   title: string
   user?: User
   showRightSidebar?: boolean
+  showBackButton?: boolean
   suggestedUsers?: SuggestedUser[]
 }
 
-export function MainLayout({ children, title, user, showRightSidebar = true, suggestedUsers = [] }: MainLayoutProps) {
+export function MainLayout({
+  children,
+  title,
+  user,
+  showRightSidebar = true,
+  showBackButton = false,
+  suggestedUsers = [],
+}: MainLayoutProps) {
+  const router = useRouter()
+
   return (
     <div className="flex max-w-7xl mx-auto">
       <div className="w-[600px] border-x border-border">
         {/* Header */}
         <Card className="border-0 border-b rounded-none sticky top-0 bg-background/80 backdrop-blur-md z-10">
           <CardHeader className="p-4 flex flex-row items-center gap-4">
-            <SidebarTrigger className="md:hidden" />
+            {showBackButton ? (
+              <Button variant="ghost" size="icon" onClick={() => router.back()} className="h-9 w-9">
+                <ArrowLeft className="h-5 w-5" />
+              </Button>
+            ) : (
+              <SidebarTrigger className="md:hidden" />
+            )}
             <CardTitle className="text-xl font-bold">{title}</CardTitle>
           </CardHeader>
         </Card>
@@ -81,7 +100,7 @@ export function MainLayout({ children, title, user, showRightSidebar = true, sug
                       <Avatar className="h-10 w-10">
                         <AvatarImage src={suggestedUser.avatar_url || undefined} />
                         <AvatarFallback className="bg-primary text-primary-foreground">
-                          {suggestedUser.display_name[0]?.toUpperCase() || 'U'}
+                          {suggestedUser.display_name[0]?.toUpperCase() || "U"}
                         </AvatarFallback>
                       </Avatar>
                       <div className="flex-1 min-w-0">

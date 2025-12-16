@@ -18,6 +18,7 @@ import { QuoteTweetDialog } from "@/components/tweet/quote-tweet-dialog"
 import { QuotedTweetPreview } from "@/components/tweet/quoted-tweet-preview"
 import { PollDisplay } from "@/components/tweet/poll-display"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 
 interface Tweet {
   id: string
@@ -61,6 +62,22 @@ export function TweetCard({ tweet, currentUserId, currentUser, onUpdate }: Tweet
   const [isQuoteDialogOpen, setIsQuoteDialogOpen] = useState(false)
   const [quotedTweet, setQuotedTweet] = useState<any>(null)
   const supabase = createClient()
+  const router = useRouter()
+
+  const handleTweetClick = (e: React.MouseEvent) => {
+    // Don't navigate if clicking on interactive elements
+    const target = e.target as HTMLElement
+    if (
+      target.closest("button") ||
+      target.closest("a") ||
+      target.closest("[role='button']") ||
+      target.closest("input") ||
+      target.closest("textarea")
+    ) {
+      return
+    }
+    router.push(`/tweet/${tweet.id}`)
+  }
 
   // Load initial like state so we don't try to insert duplicate likes
   useEffect(() => {
@@ -185,7 +202,10 @@ export function TweetCard({ tweet, currentUserId, currentUser, onUpdate }: Tweet
 
   return (
     <>
-      <Card className="border-0 border-b rounded-none hover:bg-muted/30 transition-colors">
+      <Card
+        className="border-0 border-b rounded-none hover:bg-muted/30 transition-colors cursor-pointer"
+        onClick={handleTweetClick}
+      >
         <CardContent className="p-4">
           {isPlainRetweet && (
             <div className="flex items-center gap-2 mb-2 text-sm text-muted-foreground">
