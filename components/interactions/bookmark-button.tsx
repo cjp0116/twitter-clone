@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Bookmark } from "lucide-react"
+import { useToast } from "@/hooks/use-toast"
 
 interface BookmarkButtonProps {
   tweetId: string
@@ -15,6 +16,7 @@ export function BookmarkButton({ tweetId, currentUserId, onUpdate }: BookmarkBut
   const [isBookmarked, setIsBookmarked] = useState(false)
   const [isBookmarking, setIsBookmarking] = useState(false)
   const supabase = createClient()
+  const { toast } = useToast()
 
   // Check if tweet is already bookmarked on mount
   useEffect(() => {
@@ -53,6 +55,12 @@ export function BookmarkButton({ tweetId, currentUserId, onUpdate }: BookmarkBut
 
         if (!error) {
           setIsBookmarked(false)
+          toast({
+            title: "Bookmark removed",
+            description: "Tweet removed from your bookmarks",
+          })
+        } else {
+          throw error
         }
       } else {
         // Add bookmark
@@ -63,11 +71,22 @@ export function BookmarkButton({ tweetId, currentUserId, onUpdate }: BookmarkBut
 
         if (!error) {
           setIsBookmarked(true)
+          toast({
+            title: "Tweet bookmarked",
+            description: "Tweet saved to your bookmarks",
+          })
+        } else {
+          throw error
         }
       }
       onUpdate?.()
     } catch (error) {
       console.error("Error toggling bookmark:", error)
+      toast({
+        title: "Error",
+        description: "Failed to update bookmark",
+        variant: "destructive",
+      })
     } finally {
       setIsBookmarking(false)
     }
