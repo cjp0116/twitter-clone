@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useMemo } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { TweetCard } from "@/components/tweet/tweet-card"
 import { Loader2 } from "lucide-react"
@@ -33,7 +33,7 @@ export function HashtagFeed({ tag, currentUserId }: HashtagFeedProps) {
   const [tweets, setTweets] = useState<Tweet[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const supabase = createClient()
+  const supabase = useMemo(() => createClient(), [])
 
   useEffect(() => {
     const fetchTweets = async () => {

@@ -22,12 +22,12 @@ export default async function HashtagPage({ params }: HashtagPageProps) {
     redirect('/auth/login')
   }
 
-  const { data: hashtagData } = await supabase
+  const { data: hashtagData, error: hashtagError } = await supabase
     .from('hashtags')
     .select('tag, tweet_count, created_at')
     .eq('tag', normalizedTag)
-    .single()
-  
+    .maybeSingle()
+
   const tweetCount = hashtagData?.tweet_count || 0;
 
   return (
