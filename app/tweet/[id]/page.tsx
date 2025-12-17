@@ -3,7 +3,8 @@ import { createClient } from "@/lib/supabase/server"
 import { AuthenticatedLayout } from "@/components/auth/authenticated-layout"
 import { SidebarInset } from "@/components/ui/sidebar"
 import { MainLayout } from "@/components/layout/main-layout"
-import { TweetDetailContent, getRelevantPeople } from "@/components/tweet/tweet-detail-content"
+import { TweetDetailContent } from "@/components/tweet/tweet-detail-content"
+import { getRelevantPeople } from "@/lib/queries/relevant-people"
 
 interface TweetPageProps {
   params: Promise<{
@@ -53,7 +54,7 @@ export default async function TweetPage({ params }: TweetPageProps) {
     .single()
 
   // Fetch relevant people (people who engaged with this tweet)
-  const relevantPeople = await getRelevantPeople(id, supabase)
+  const relevantPeople = await getRelevantPeople(id)
 
   // Check which relevant people the current user is following
   const relevantPeopleWithFollowStatus = await Promise.all(
