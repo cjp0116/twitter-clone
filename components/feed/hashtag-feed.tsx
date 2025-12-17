@@ -136,11 +136,15 @@ export function HashtagFeed({ tag, currentUserId }: HashtagFeedProps) {
         .select("tweet_id")
         .eq("hashtag_id", hashtagData.id)
 
-      if (!tweetHashtags) return
+      if (!tweetHashtags || tweetHashtags.length === 0) {
+        setTweets([])
+        setIsLoading(false)
+        return
+      }
 
       const tweetIds = tweetHashtags.map((th) => th.tweet_id)
 
-      const { data: tweetsData } = await supabase
+      const { data: tweetsData, error: tweetsError } = await supabase
         .from("tweets")
         .select(
           `
@@ -154,6 +158,14 @@ export function HashtagFeed({ tag, currentUserId }: HashtagFeedProps) {
         )
         .in("id", tweetIds)
         .order("created_at", { ascending: false })
+
+      if (tweetsError) {
+        console.error("Error fetching tweets:", tweetsError)
+        setError("Failed to load tweets")
+        setTweets([])
+        setIsLoading(false)
+        return
+      }
 
       setTweets(tweetsData || [])
     }
