@@ -20,6 +20,11 @@ interface SuggestedUser {
   isFollowing: boolean
 }
 
+interface TrendingHashtag {
+  tag: string
+  tweet_count: number
+}
+
 interface MainLayoutProps {
   children: React.ReactNode
   title: string
@@ -27,6 +32,7 @@ interface MainLayoutProps {
   showRightSidebar?: boolean
   showBackButton?: boolean
   suggestedUsers?: SuggestedUser[]
+  trendingHashtags?: TrendingHashtag[]
 }
 
 export function MainLayout({
@@ -36,6 +42,7 @@ export function MainLayout({
   showRightSidebar = true,
   showBackButton = false,
   suggestedUsers = [],
+  trendingHashtags = [],
 }: MainLayoutProps) {
   const router = useRouter()
 
@@ -63,27 +70,28 @@ export function MainLayout({
       {showRightSidebar && (
         <div className="hidden xl:flex flex-col w-80 p-4 space-y-4">
           {/* What's happening section */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">What's happening</CardTitle>
-            </CardHeader>
-            <div className="p-4 pt-0 space-y-3">
-              <div className="hover:bg-muted/50 p-2 rounded cursor-pointer">
-                <p className="text-sm text-muted-foreground">Trending in United States</p>
-                <p className="font-semibold">SMOONA</p>
-                <p className="text-sm text-muted-foreground">5,086 posts</p>
+          {trendingHashtags.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Trending</CardTitle>
+              </CardHeader>
+              <div className="p-4 pt-0 space-y-3">
+                {trendingHashtags.map((hashtag, index) => (
+                  <Link
+                    key={hashtag.tag}
+                    href={`/hashtag/${encodeURIComponent(hashtag.tag)}`}
+                    className="block hover:bg-muted/50 p-2 rounded cursor-pointer transition-colors"
+                  >
+                    <p className="text-sm text-muted-foreground">Trending · #{index + 1}</p>
+                    <p className="font-semibold">#{hashtag.tag}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {hashtag.tweet_count.toLocaleString()} {hashtag.tweet_count === 1 ? "post" : "posts"}
+                    </p>
+                  </Link>
+                ))}
               </div>
-              <div className="hover:bg-muted/50 p-2 rounded cursor-pointer">
-                <p className="text-sm text-muted-foreground">Trending in United States</p>
-                <p className="font-semibold">BHVR</p>
-              </div>
-              <div className="hover:bg-muted/50 p-2 rounded cursor-pointer">
-                <p className="text-sm text-muted-foreground">Trending in United States</p>
-                <p className="font-semibold">North Texas Giving Day</p>
-              </div>
-              <div className="text-blue-500 hover:underline cursor-pointer p-2">Show more</div>
-            </div>
-          </Card>
+            </Card>
+          )}
 
           {/* Who to follow section */}
           {suggestedUsers.length > 0 && (
