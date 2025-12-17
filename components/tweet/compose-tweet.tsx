@@ -10,6 +10,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { ImageIcon, Smile, X, Loader2, BarChart3 } from "lucide-react"
 import { PollComposer, type PollData } from "./poll-composer"
+import { extractHashtags } from "@/lib/utils/hashtags"
 
 interface ComposeTweetProps {
   user: {
@@ -270,7 +271,19 @@ export function ComposeTweet({ user, onTweetPosted }: ComposeTweetProps) {
           }
         }
       }
+      // Handle hashtags after tweet creation
+      if (insertedTweet && insertedTweet.content) {
+        const hashtags = extractHashtags(insertedTweet.content)
+        if(hashtags.length > 0) {
+          for (const tag of hashtags) {
+            const { data: hashtagData, error: hashtagError } = await supabase.from('hashtags').upsert({ tag }, { onConflict: 'tag', ignoreDuplicates: false }).select('id').single()
 
+            if (!hashtagError && hashtagData) {
+              await supabase.from('tweet_hashtags').insert({ tweet_id: insertedTweet.id, hashtag_id: hashtagData.id })
+            }
+          }
+        }
+      }
       setContent("")
       setMediaFiles([])
       setPollData(null)

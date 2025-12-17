@@ -229,11 +229,11 @@ export function TweetDetailContent({ tweet, currentUserId, currentUser }: TweetD
 
     return parts.map((part, index) => {
       if (/^#[A-Za-z0-9_]+$/.test(part)) {
-        const tag = part.slice(1)
+        const tag = part.slice(1).toLowerCase()
         return (
           <Link
             key={`${part}-${index}`}
-            href={`/explore?tag=${encodeURIComponent(tag)}`}
+            href={`/hashtag/${encodeURIComponent(tag)}`}
             className="text-sky-500 hover:underline"
           >
             {part}

@@ -1,0 +1,50 @@
+import { redirect } from "next/navigation"
+import { createClient } from "@/lib/supabase/server"
+import { AuthenticatedLayout } from "@/components/auth/authenticated-layout"
+import { SidebarInset } from "@/components/ui/sidebar"
+import { MainLayout } from "@/components/layout/main-layout"
+import { HashtagFeed } from "@/components/feed/hashtag-feed"
+import { normalizeHashtag } from "@/lib/utils/hashtags"
+
+interface HashtagPageProps {
+  params: Promise<{
+    tag: string
+  }>
+}
+
+export default async function HashtagPage({ params }: HashtagPageProps) {
+  const { tag } = await params;
+  const normalizedTag = normalizeHashtag(tag);
+  const supabase = await createClient();
+  const { data: { user }, error: userError } = await supabase.auth.getUser();
+
+  if (!user || userError) {
+    redirect('/auth/login')
+  }
+
+  const { data: hashtagData } = await supabase
+    .from('hashtags')
+    .select('tag, tweet_count, created_at')
+    .eq('tag', normalizedTag)
+    .single()
+  
+  const tweetCount = hashtagData?.tweet_count || 0;
+
+  return (
+    <AuthenticatedLayout user={user}>
+      <SidebarInset>
+        <MainLayout
+          title={`#${normalizedTag}`}
+          user={user}
+          showBackButton
+        >
+          <div className="border-b p-4 space-y-2">
+            <h1 className="text-2xl font-bold">{`#${normalizedTag}`}</h1>
+            <p className="text-sm text-muted-foreground">{tweetCount} {tweetCount !== 1 ? "posts" : "post"}</p>
+          </div>
+          <HashtagFeed tag={normalizedTag} currentUserId={user.id} />
+        </MainLayout>
+      </SidebarInset>
+    </AuthenticatedLayout>
+  )
+} 
