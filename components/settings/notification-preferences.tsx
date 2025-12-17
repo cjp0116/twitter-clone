@@ -24,7 +24,7 @@ interface NotificationPreferencesProps {
   userId: string
 }
 
-export function NotificationPreferences({ userId }: NotificationPreferencesProps) {
+export default function NotificationPreferences({ userId }: NotificationPreferencesProps) {
   const [preferences, setPreferences] = useState<NotificationPreferences>({
     likes_enabled: true,
     retweets_enabled: true,
