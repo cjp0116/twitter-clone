@@ -5,6 +5,7 @@ import { TimelineFeed } from "@/components/feed/timeline-feed"
 import { AuthenticatedLayout } from "@/components/auth/authenticated-layout"
 import { MainLayout } from "@/components/layout/main-layout"
 import { SidebarInset } from "@/components/ui/sidebar"
+import { getTrendingHashtags } from "@/lib/queries/trending-hashtags"
 
 export default async function HomePage() {
   const supabase = await createClient()
@@ -63,10 +64,13 @@ export default async function HomePage() {
     })
   )
 
+  // Fetch trending hashtags
+  const trendingHashtags = await getTrendingHashtags(5)
+
   return (
     <AuthenticatedLayout user={user}>
       <SidebarInset>
-        <MainLayout title="Home" user={user} suggestedUsers={suggestedUsersWithFollowStatus}>
+        <MainLayout title="Home" user={user} suggestedUsers={suggestedUsersWithFollowStatus} trendingHashtags={trendingHashtags}>
           {/* Compose Tweet */}
           <ComposeTweet user={user} />
 
