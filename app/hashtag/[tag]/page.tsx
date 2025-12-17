@@ -12,25 +12,35 @@ interface HashtagPageProps {
   }>
 }
 
-export default async function HashtagPage({ params }: HashtagPageProps) {
-  const { tag } = await params;
-  const normalizedTag = normalizeHashtag(tag);
-  const supabase = await createClient();
-  const { data: { user }, error: userError } = await supabase.auth.getUser();
+export const dynamic = 'force-dynamic'
+export const dynamicParams = true
 
-  if (!user || userError) {
-    redirect('/auth/login')
+export default async function HashtagPage({ params }: HashtagPageProps) {
+  const { tag } = await params
+  const normalizedTag = normalizeHashtag(decodeURIComponent(tag))
+  const supabase = await createClient()
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser()
+
+  if (userError || !user) {
+    redirect("/auth/login")
   }
 
-  const { data: hashtagData, error: hashtagError } = await supabase
-    .from('hashtags')
-    .select('tag, tweet_count, created_at')
-    .eq('tag', normalizedTag)
+
+
+  // Fetch hashtag stats
+  const { data: hashtagData } = await supabase
+    .from("hashtags")
+    .select("tag, tweet_count, created_at")
+    .eq("tag", normalizedTag)
     .maybeSingle()
 
-  const tweetCount = hashtagData?.tweet_count || 0;
+  const tweetCount = hashtagData?.tweet_count || 0
 
   return (
+
     <AuthenticatedLayout user={user}>
       <SidebarInset>
         <MainLayout
@@ -39,12 +49,14 @@ export default async function HashtagPage({ params }: HashtagPageProps) {
           showBackButton
         >
           <div className="border-b p-4 space-y-2">
-            <h1 className="text-2xl font-bold">{`#${normalizedTag}`}</h1>
-            <p className="text-sm text-muted-foreground">{tweetCount} {tweetCount !== 1 ? "posts" : "post"}</p>
+            <h1 className="text-2xl font-bold">#{normalizedTag}</h1>
+            <p className="text-muted-foreground text-sm">
+              {tweetCount} {tweetCount === 1 ? "post" : "posts"}
+            </p>
           </div>
           <HashtagFeed tag={normalizedTag} currentUserId={user.id} />
         </MainLayout>
       </SidebarInset>
     </AuthenticatedLayout>
   )
-} 
+}
