@@ -9,6 +9,7 @@ import { ArrowLeft } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { FollowButton } from "@/components/interactions/follow-button"
+import { UserHoverCard } from "@/components/user/user-hover-card"
 import Link from "next/link"
 
 interface SuggestedUser {
@@ -93,21 +94,24 @@ export function MainLayout({
               <div className="p-4 pt-0 space-y-3">
                 {suggestedUsers.slice(0, 3).map((suggestedUser) => (
                   <div key={suggestedUser.id} className="flex items-center justify-between">
-                    <Link
-                      href={`/profile/${suggestedUser.username}`}
-                      className="flex items-center gap-3 flex-1 min-w-0 hover:opacity-80 transition-opacity"
-                    >
-                      <Avatar className="h-10 w-10">
-                        <AvatarImage src={suggestedUser.avatar_url || undefined} />
-                        <AvatarFallback className="bg-primary text-primary-foreground">
-                          {suggestedUser.display_name[0]?.toUpperCase() || "U"}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-semibold truncate">{suggestedUser.display_name}</p>
-                        <p className="text-sm text-muted-foreground truncate">@{suggestedUser.username}</p>
-                      </div>
-                    </Link>
+                    <UserHoverCard userId={suggestedUser.id} currentUserId={user?.id}>
+                      <Link
+                        href={`/profile/${suggestedUser.username}`}
+                        className="flex items-center gap-3 flex-1 min-w-0 hover:opacity-80 transition-opacity"
+                      >
+                        <Avatar className="h-10 w-10">
+                          <AvatarImage src={suggestedUser.avatar_url || undefined} />
+                          <AvatarFallback className="bg-primary text-primary-foreground">
+                            {suggestedUser.display_name[0]?.toUpperCase() || "U"}
+                          </AvatarFallback>
+                        </Avatar>
+
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold truncate">{suggestedUser.display_name}</p>
+                          <p className="text-sm text-muted-foreground truncate">@{suggestedUser.username}</p>
+                        </div>
+                      </Link>
+                    </UserHoverCard>
                     {user && (
                       <FollowButton
                         targetUserId={suggestedUser.id}

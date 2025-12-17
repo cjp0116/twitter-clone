@@ -17,6 +17,7 @@ import { TweetMediaGallery } from "@/components/tweet/tweet-media-gallery"
 import { QuoteTweetDialog } from "@/components/tweet/quote-tweet-dialog"
 import { QuotedTweetPreview } from "@/components/tweet/quoted-tweet-preview"
 import { PollDisplay } from "@/components/tweet/poll-display"
+import { UserHoverCard } from "@/components/user/user-hover-card"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 
@@ -215,21 +216,28 @@ export function TweetCard({ tweet, currentUserId, currentUser, onUpdate }: Tweet
           )}
 
           <div className="flex gap-3">
-            <Link href={`/profile/${tweet.profiles.username}`}>
-              <Avatar className="h-12 w-12 cursor-pointer">
-                <AvatarImage src={tweet.profiles.avatar_url || "/placeholder.svg"} />
-                <AvatarFallback className="bg-primary text-primary-foreground">
-                  {tweet.profiles.display_name[0]?.toUpperCase() || "U"}
-                </AvatarFallback>
-              </Avatar>
-            </Link>
-
+            <UserHoverCard userId={tweet.author_id} currentUserId={currentUserId}>
+              <Link href={`/profile/${tweet.profiles.username}`}>
+                <Avatar className="h-12 w-12 cursor-pointer">
+                  <AvatarImage src={tweet.profiles.avatar_url || "/placeholder.svg"} />
+                  <AvatarFallback className="bg-primary text-primary-foreground">
+                    {tweet.profiles.display_name[0]?.toUpperCase() || "U"}
+                  </AvatarFallback>
+                </Avatar>
+              </Link>
+            </UserHoverCard>
             <div className="flex-1 space-y-2">
               <div className="flex items-center gap-2">
-                <Link href={`/profile/${tweet.profiles.username}`} className="hover:underline">
-                  <span className="font-semibold text-foreground">{tweet.profiles.display_name}</span>
-                </Link>
-                <span className="text-muted-foreground">@{tweet.profiles.username}</span>
+                <UserHoverCard userId={tweet.author_id} currentUserId={currentUserId}>
+                  <Link href={`/profile/${tweet.profiles.username}`} className="hover:underline">
+                    <span className="font-semibold text-foreground">{tweet.profiles.display_name}</span>
+                  </Link>
+                </UserHoverCard>
+                <UserHoverCard userId={tweet.author_id} currentUserId={currentUserId}>
+                  <Link href={`/profile/${tweet.profiles.username}`} className="text-muted-foreground hover:underline">
+                    @{tweet.profiles.username}
+                  </Link>
+                </UserHoverCard>
                 <span className="text-muted-foreground">·</span>
                 <span className="text-muted-foreground text-sm">
                   {formatDistanceToNow(new Date(tweet.created_at), { addSuffix: true })}
