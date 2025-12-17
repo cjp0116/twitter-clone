@@ -15,6 +15,7 @@ import { BookmarkButton } from "@/components/interactions/bookmark-button"
 import { TweetMediaGallery } from "@/components/tweet/tweet-media-gallery"
 import { PollDisplay } from "@/components/tweet/poll-display"
 import { QuotedTweetPreview } from "@/components/tweet/quoted-tweet-preview"
+import { UserHoverCard } from "@/components/user/user-hover-card"
 
 interface Tweet {
   id: string
@@ -262,19 +263,27 @@ export function TweetDetailContent({ tweet, currentUserId, currentUser }: TweetD
       <CardContent className="p-4 space-y-4">
         {/* Author Info */}
         <div className="flex items-center gap-3">
-          <Link href={`/profile/${tweet.profiles.username}`}>
-            <Avatar className="h-12 w-12 cursor-pointer">
-              <AvatarImage src={tweet.profiles.avatar_url || "/placeholder.svg"} />
-              <AvatarFallback className="bg-primary text-primary-foreground">
-                {tweet.profiles.display_name[0]?.toUpperCase() || "U"}
-              </AvatarFallback>
-            </Avatar>
-          </Link>
-          <div>
-            <Link href={`/profile/${tweet.profiles.username}`} className="hover:underline">
-              <p className="font-semibold text-foreground">{tweet.profiles.display_name}</p>
+          <UserHoverCard userId={tweet.author_id} currentUserId={currentUserId}>
+            <Link href={`/profile/${tweet.profiles.username}`}>
+              <Avatar className="h-12 w-12 cursor-pointer">
+                <AvatarImage src={tweet.profiles.avatar_url || "/placeholder.svg"} />
+                <AvatarFallback className="bg-primary text-primary-foreground">
+                  {tweet.profiles.display_name[0]?.toUpperCase() || "U"}
+                </AvatarFallback>
+              </Avatar>
             </Link>
-            <p className="text-muted-foreground">@{tweet.profiles.username}</p>
+          </UserHoverCard>
+          <div>
+            <UserHoverCard userId={tweet.author_id} currentUserId={currentUserId}>
+              <Link href={`/profile/${tweet.profiles.username}`} className="hover:underline">
+                <p className="font-semibold text-foreground">{tweet.profiles.display_name}</p>
+              </Link>
+            </UserHoverCard>
+            <UserHoverCard userId={tweet.author_id} currentUserId={currentUserId}>
+              <Link href={`/profile/${tweet.profiles.username}`} className="text-muted-foreground hover:underline">
+                @{tweet.profiles.username}
+              </Link>
+            </UserHoverCard>
           </div>
         </div>
 
@@ -391,18 +400,26 @@ export function TweetDetailContent({ tweet, currentUserId, currentUser }: TweetD
             replies.map((reply) => (
               <Card key={reply.id} className="border rounded-lg p-4 hover:bg-muted/30 transition-colors">
                 <div className="flex gap-3">
-                  <Link href={`/profile/${reply.profiles.username}`}>
-                    <Avatar className="h-10 w-10">
-                      <AvatarImage src={reply.profiles.avatar_url || "/placeholder.svg"} />
-                      <AvatarFallback>{reply.profiles.display_name[0]?.toUpperCase()}</AvatarFallback>
-                    </Avatar>
-                  </Link>
+                  <UserHoverCard userId={reply.author_id} currentUserId={currentUserId}>
+                    <Link href={`/profile/${reply.profiles.username}`}>
+                      <Avatar className="h-10 w-10">
+                        <AvatarImage src={reply.profiles.avatar_url || "/placeholder.svg"} />
+                        <AvatarFallback>{reply.profiles.display_name[0]?.toUpperCase()}</AvatarFallback>
+                      </Avatar>
+                    </Link>
+                  </UserHoverCard>
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
-                      <Link href={`/profile/${reply.profiles.username}`}>
-                        <span className="font-semibold hover:underline">{reply.profiles.display_name}</span>
-                      </Link>
-                      <span className="text-muted-foreground">@{reply.profiles.username}</span>
+                      <UserHoverCard userId={reply.author_id} currentUserId={currentUserId}>
+                        <Link href={`/profile/${reply.profiles.username}`}>
+                          <span className="font-semibold hover:underline">{reply.profiles.display_name}</span>
+                        </Link>
+                      </UserHoverCard>
+                      <UserHoverCard userId={reply.author_id} currentUserId={currentUserId}>
+                        <Link href={`/profile/${reply.profiles.username}`} className="text-muted-foreground hover:underline">
+                          @{reply.profiles.username}
+                        </Link>
+                      </UserHoverCard>
                       <span className="text-muted-foreground">·</span>
                       <span className="text-muted-foreground text-sm">
                         {formatDistanceToNow(new Date(reply.created_at), { addSuffix: true })}
