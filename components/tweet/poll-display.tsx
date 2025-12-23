@@ -87,15 +87,22 @@ export function PollDisplay({ tweetId, currentUserId }: PollDisplayProps) {
 
       if (pollError) {
         console.error("Error fetching poll for tweet", tweetId, ":", pollError)
+        setPoll(null)
+        setOptions([])
+        setUserVote(null)
+        setTotalVotes(0)
         return
       }
 
       if (!pollData) {
-        console.log("No poll found for tweet:", tweetId)
+        // console.log("No poll found for tweet:", tweetId)
+        setPoll(null)
+        setOptions([])
+        setUserVote(null)
+        setTotalVotes(0)
         return
       }
-
-      console.log("Poll found for tweet", tweetId, ":", pollData)
+      // console.log("Poll found for tweet", tweetId, ":", pollData)
       setPoll(pollData)
       setHasEnded(new Date(pollData.ends_at) < new Date())
 
@@ -116,12 +123,18 @@ export function PollDisplay({ tweetId, currentUserId }: PollDisplayProps) {
 
       // Check if current user has voted
       if (currentUserId) {
-        const { data: voteData } = await supabase
+        const { data: voteData, error: voteError } = await supabase
           .from("poll_votes")
           .select("option_id")
           .eq("poll_id", pollData.id)
           .eq("user_id", currentUserId)
-          .single()
+          .maybeSingle()
+
+        if (voteError) {
+          console.error("Error fetching poll vote:", voteError)
+          setUserVote(null)
+          return
+        }
 
         setUserVote(voteData?.option_id || null)
       }

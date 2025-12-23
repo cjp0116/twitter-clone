@@ -17,9 +17,8 @@ export async function getTrendingHashtags(limit: number = 5): Promise<TrendingHa
   const { data, error } = await supabase
     .from("hashtags")
     .select("tag, tweet_count")
-    .order("updated_at", { ascending: false })
     .order("tweet_count", { ascending: false })
-    .limit(limit)
+    .order("updated_at", { ascending: false }).limit(limit)
 
   if (error) {
     console.error("Error fetching trending hashtags:", error)

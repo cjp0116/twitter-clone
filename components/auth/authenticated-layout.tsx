@@ -2,11 +2,11 @@
 
 import type React from "react"
 
-import { useEffect, useState } from "react"
-import { createBrowserClient } from "@supabase/ssr"
+import { useEffect, useState, useMemo } from "react"
 import type { User } from "@supabase/supabase-js"
 import { SidebarProvider } from "@/components/ui/sidebar"
 import { TwitterSidebar } from "@/components/layout/twitter-sidebar"
+import { createClient} from '@/lib/supabase/client'
 
 interface AuthenticatedLayoutProps {
   children: React.ReactNode
@@ -16,6 +16,7 @@ interface AuthenticatedLayoutProps {
 export function AuthenticatedLayout({ children, user: propUser }: AuthenticatedLayoutProps) {
   const [user, setUser] = useState<User | null>(propUser || null)
   const [loading, setLoading] = useState(!propUser)
+  const supabase = useMemo(() => createClient(), [])
 
   useEffect(() => {
     if (propUser) {
@@ -23,11 +24,6 @@ export function AuthenticatedLayout({ children, user: propUser }: AuthenticatedL
       setLoading(false)
       return
     }
-
-    const supabase = createBrowserClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    )
 
     const getUser = async () => {
       const {

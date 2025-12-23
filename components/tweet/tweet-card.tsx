@@ -277,13 +277,13 @@ export function TweetCard({ tweet, currentUserId, currentUser, onUpdate }: Tweet
                 </div>
               </div>
 
-              {tweet.content && <div className="text-foreground leading-relaxed break-words">{renderContent(tweet.content)}</div>}
+              {tweet.content && <div className="text-foreground leading-relaxed wrap-break-word">{renderContent(tweet.content)}</div>}
 
               {tweet.media_urls && tweet.media_urls.length > 0 && (
                 <TweetMediaGallery mediaUrls={tweet.media_urls} mediaTypes={tweet.media_types || []} />
               )}
 
-              {isQuoteTweet && quotedTweet && ( 
+              {isQuoteTweet && quotedTweet && (
                 <div className="mt-3">
                   <QuotedTweetPreview tweet={quotedTweet} compact={true} />
                 </div>

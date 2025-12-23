@@ -140,10 +140,9 @@ export function UserHoverCard({ userId, children, currentUserId }: UserHoverCard
               </Link>
               {currentUserId && currentUserId !== userId && (
                 <FollowButton
-                  userId={userId}
-                  username={profile.username}
-                  initialFollowing={isFollowing}
-                  onFollowChange={handleFollowChange}
+                  targetUserId={userId}
+                  isFollowing={isFollowing}
+                  currentUserId={currentUserId}
                 />
               )}
             </div>

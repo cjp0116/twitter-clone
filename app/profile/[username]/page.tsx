@@ -24,7 +24,7 @@ interface ProfilePageProps {
 
 export default async function ProfilePage({ params }: ProfilePageProps) {
   const supabase = await createClient()
-
+  const { username } = await params;
   const {
     data: { user },
     error: userError,
@@ -34,12 +34,12 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
   }
 
   // Fetch profile by username
-  console.log("[v0] Looking for profile with username:", params.username)
+  console.log("[v0] Looking for profile with username:", username)
 
   const { data: profile, error: profileError } = await supabase
     .from("profiles")
     .select("*")
-    .eq("username", params.username)
+    .eq("username", username)
     .single()
 
   console.log("[v0] Profile query result:", { profile, profileError })

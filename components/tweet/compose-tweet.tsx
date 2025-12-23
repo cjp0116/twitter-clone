@@ -175,11 +175,11 @@ export function ComposeTweet({ user, onTweetPosted }: ComposeTweetProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    console.log("=== Tweet Submit Debug ===")
-    console.log("Content:", content)
-    console.log("Media files:", mediaFiles.length)
-    console.log("Poll data:", pollData)
-    console.log("=========================")
+    // console.log("=== Tweet Submit Debug ===")
+    // console.log("Content:", content)
+    // console.log("Media files:", mediaFiles.length)
+    // console.log("Poll data:", pollData)
+    // console.log("=========================")
 
     if ((!content.trim() && mediaFiles.length === 0 && !pollData) || content.length > 280 || !profile) return
 
@@ -277,6 +277,7 @@ export function ComposeTweet({ user, onTweetPosted }: ComposeTweetProps) {
         const hashtags = extractHashtags(insertedTweet.content)
         if (hashtags.length > 0) {
           // First, upsert hashtags to get their IDs
+          const hashtagLinks: { tweet_id:string; hashtag_id:string}[] = []
           for (const tag of hashtags) {
             // Insert or update hashtag
             const { data: hashtagData, error: hashtagError } = await supabase
@@ -287,10 +288,13 @@ export function ComposeTweet({ user, onTweetPosted }: ComposeTweetProps) {
 
             if (!hashtagError && hashtagData) {
               // Link tweet to hashtag
-              await supabase.from("tweet_hashtags").insert({
-                tweet_id: insertedTweet.id,
-                hashtag_id: hashtagData.id,
-              })
+              hashtagLinks.push({ tweet_id: insertedTweet.id, hashtag_id: hashtagData.id })
+            }
+          }
+          if(hashtagLinks.length > 0) {
+            const { error: linkError } = await supabase.from("tweet_hashtags").insert(hashtagLinks)
+            if (linkError) {
+              console.error("Error linking hashtags to tweet:", linkError)
             }
           }
         }

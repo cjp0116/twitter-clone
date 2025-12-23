@@ -6,6 +6,7 @@ import { AuthenticatedLayout } from "@/components/auth/authenticated-layout"
 import { MainLayout } from "@/components/layout/main-layout"
 import { SidebarInset } from "@/components/ui/sidebar"
 import { getTrendingHashtags } from "@/lib/queries/trending-hashtags"
+import type { TrendingHashtag as TrendingHashtagType } from "@/lib/queries/trending-hashtags"
 
 export default async function HomePage() {
   const supabase = await createClient()
@@ -65,8 +66,12 @@ export default async function HomePage() {
   )
 
   // Fetch trending hashtags
-  const trendingHashtags = await getTrendingHashtags(5)
-
+  let trendingHashtags: TrendingHashtagType[] = []
+  try {
+    trendingHashtags = await getTrendingHashtags(5) || []
+  } catch (error) {
+    console.error("Error fetching trending hashtags:", error)
+  }
   return (
     <AuthenticatedLayout user={user}>
       <SidebarInset>

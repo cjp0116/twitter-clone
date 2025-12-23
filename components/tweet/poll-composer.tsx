@@ -60,10 +60,10 @@ export function PollComposer({ onPollChange, onRemove }: PollComposerProps) {
         options: opts,
         durationHours: hours,
       }
-      console.log("PollComposer sending poll data:", pollData)
+      // console.log("PollComposer sending poll data:", pollData)
       onPollChange(pollData)
     } else {
-      console.log("PollComposer: Not enough options, sending null")
+      // console.log("PollComposer: Not enough options, sending null")
       onPollChange(null)
     }
   }
@@ -93,7 +93,7 @@ export function PollComposer({ onPollChange, onRemove }: PollComposerProps) {
                 variant="ghost"
                 size="icon"
                 onClick={() => removeOption(index)}
-                className="h-9 w-9 flex-shrink-0"
+                className="h-9 w-9 shrink-0"
               >
                 <X className="h-4 w-4" />
               </Button>
