@@ -28,11 +28,15 @@ export default async function HashtagPage({ params }: HashtagPageProps) {
   }
 
   // Fetch hashtag stats
-  const { data: hashtagData } = await supabase
+  const { data: hashtagData, error: hashtagError } = await supabase
     .from("hashtags")
     .select("tag, tweet_count, created_at")
     .eq("tag", normalizedTag)
-    .single()
+    .maybeSingle()
+
+  if (hashtagError) {
+    console.error("Error fetching hashtag:", hashtagError)
+  }
 
   const tweetCount = hashtagData?.tweet_count || 0
 
