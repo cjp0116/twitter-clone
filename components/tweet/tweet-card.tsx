@@ -72,6 +72,7 @@ export function TweetCard({ tweet, currentUserId, currentUser, onUpdate }: Tweet
       target.closest("button") ||
       target.closest("a") ||
       target.closest("[role='button']") ||
+      target.closest("[role='menuitem']") ||
       target.closest("input") ||
       target.closest("textarea")
     ) {
