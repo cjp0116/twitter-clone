@@ -18,7 +18,7 @@ import { QuoteTweetDialog } from "@/components/tweet/quote-tweet-dialog"
 import { QuotedTweetPreview } from "@/components/tweet/quoted-tweet-preview"
 import { PollDisplay } from "@/components/tweet/poll-display"
 import { UserHoverCard } from "@/components/user/user-hover-card"
-import { UserHoverCard } from "@/components/user/user-hover-card"
+
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 

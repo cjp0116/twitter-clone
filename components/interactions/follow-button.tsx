@@ -9,9 +9,10 @@ interface FollowButtonProps {
   targetUserId: string
   isFollowing: boolean
   currentUserId: string
+  onFollowChange?: (newFollowingState: boolean) => void
 }
 
-export function FollowButton({ targetUserId, isFollowing: initialIsFollowing, currentUserId }: FollowButtonProps) {
+export function FollowButton({ targetUserId, isFollowing: initialIsFollowing, currentUserId, onFollowChange }: FollowButtonProps) {
   const [isFollowing, setIsFollowing] = useState(initialIsFollowing)
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
@@ -32,6 +33,7 @@ export function FollowButton({ targetUserId, isFollowing: initialIsFollowing, cu
 
         if (!error) {
           setIsFollowing(false)
+          onFollowChange?.(false)
         }
       } else {
         // Follow
@@ -42,6 +44,7 @@ export function FollowButton({ targetUserId, isFollowing: initialIsFollowing, cu
 
         if (!error) {
           setIsFollowing(true)
+          onFollowChange?.(true)
         }
       }
       router.refresh()

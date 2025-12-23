@@ -25,7 +25,7 @@ export function MessageInput({ user, conversationId, replyToId, onMessageSent }:
   const [isTyping, setIsTyping] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
-  const typingTimeoutRef = useRef<NodeJS.Timeout>()
+  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const supabase = createClient()
 
   useEffect(() => {
@@ -44,7 +44,7 @@ export function MessageInput({ user, conversationId, replyToId, onMessageSent }:
 
     // Clear existing timeout
     if (typingTimeoutRef.current) {
-      clearTimeout(typingTimeoutRef.current)
+      clearTimeout(typingTimeoutRef.current as NodeJS.Timeout)
     }
 
     // Update typing status

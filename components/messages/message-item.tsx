@@ -176,7 +176,7 @@ export function MessageItem({ message, currentUserId, onReply, conversationId }:
             </div>
           )}
 
-          {message.content && <p className="text-white break-words">{message.content}</p>}
+          {message.content && <p className="text-white wrap-break-word">{message.content}</p>}
 
           {/* Reactions */}
           {localReactions.length > 0 && (

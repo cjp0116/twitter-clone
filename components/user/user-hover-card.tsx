@@ -37,7 +37,7 @@ export function UserHoverCard({ userId, children, currentUserId }: UserHoverCard
 
     const fetchUserProfile = async () => {
       setIsLoading(true)
-      if(isCancelled) return
+      if (isCancelled) return
       const supabase = createClient()
 
       try {
@@ -94,7 +94,7 @@ export function UserHoverCard({ userId, children, currentUserId }: UserHoverCard
       } catch (error) {
         console.error("Error fetching user profile:", error)
       } finally {
-        if(!isCancelled) {
+        if (!isCancelled) {
           setIsLoading(false)
         }
       }
@@ -152,7 +152,8 @@ export function UserHoverCard({ userId, children, currentUserId }: UserHoverCard
                   currentUserId={currentUserId}
                   onFollowChange={handleFollowChange}
                 />
-              )}            </div>
+              )}
+            </div>
 
             {/* User Info */}
             <Link href={`/profile/${profile.username}`} className="block space-y-1 hover:underline">
