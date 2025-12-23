@@ -81,6 +81,12 @@ export default async function HomePage() {
           suggestedUsers={suggestedUsersWithFollowStatus}
           trendingHashtags={trendingHashtags}
         >
+        <MainLayout
+          title="Home"
+          user={user}
+          suggestedUsers={suggestedUsersWithFollowStatus}
+          trendingHashtags={trendingHashtags}
+        >
           {/* Compose Tweet */}
           <ComposeTweet user={user} />
 

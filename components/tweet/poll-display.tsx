@@ -144,6 +144,7 @@ export function PollDisplay({ tweetId, currentUserId }: PollDisplayProps) {
           return
         }
 
+
         setUserVote(voteData?.option_id || null)
       }
     } catch (error) {
