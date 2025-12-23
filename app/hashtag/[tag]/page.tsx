@@ -35,7 +35,17 @@ export default async function HashtagPage({ params }: HashtagPageProps) {
     .maybeSingle()
 
   if (hashtagError) {
-    console.error("Error fetching hashtag:", hashtagError)
+    return (
+      <AuthenticatedLayout user={user}>
+        <SidebarInset>
+          <MainLayout title={`#${normalizedTag}`} user={user} showBackButton>
+            <div className="p-4">
+              <p className="text-destructive">Unable to load hashtag data. Please try again later.</p>
+            </div>
+          </MainLayout>
+        </SidebarInset>
+      </AuthenticatedLayout>
+    )
   }
 
   const tweetCount = hashtagData?.tweet_count || 0

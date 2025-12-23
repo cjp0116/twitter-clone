@@ -189,13 +189,13 @@ export function BlockMuteButton({ targetUserId, targetUsername, currentUserId, o
           <AlertDialogHeader>
             <AlertDialogTitle>Block @{targetUsername}?</AlertDialogTitle>
             <AlertDialogDescription className="space-y-2">
-              <div>They will not be able to:</div>
+              <p>They will not be able to:</p>
               <ul className="list-disc list-inside space-y-1 text-sm">
                 <li>See your tweets or profile</li>
                 <li>Follow you or interact with your tweets</li>
                 <li>Send you direct messages</li>
               </ul>
-              <div className="mt-2">You will also unfollow each other.</div>
+              <p className="mt-2">You will also unfollow each other.</p>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

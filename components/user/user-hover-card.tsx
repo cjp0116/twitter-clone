@@ -32,10 +32,12 @@ export function UserHoverCard({ userId, children, currentUserId }: UserHoverCard
   const [isOpen, setIsOpen] = useState(false)
 
   useEffect(() => {
-    if (!isOpen) return
+    if (!isOpen || profile) return
+    let isCancelled = false
 
     const fetchUserProfile = async () => {
       setIsLoading(true)
+      if(isCancelled) return
       const supabase = createClient()
 
       try {
@@ -49,39 +51,39 @@ export function UserHoverCard({ userId, children, currentUserId }: UserHoverCard
         if (profileError) throw profileError
 
         // Parallelize independent follow-related queries
-        const followQueries: Promise<{ count: number | null } | { isFollowing: boolean }>[] = [
-          supabase
-            .from("follows")
-            .select("*", { count: "exact", head: true })
-            .eq("following_id", userId)
-            .then(({ count }) => ({ count })),
-          supabase
-            .from("follows")
-            .select("*", { count: "exact", head: true })
-            .eq("follower_id", userId)
-            .then(({ count }) => ({ count })),
-        ]
+        const followerCountPromise = supabase.
+          from('follows')
+          .select('*', { count: 'exact', head: true })
+          .eq('following_id', userId)
+          .then(({ count }) => count || 0)
+
+        const followingCountPromise = supabase.
+          from('follows')
+          .select('*', { count: 'exact', head: true })
+          .eq('follower_id', userId)
+          .then(({ count }) => count || 0)
 
         // Add isFollowing check if applicable
         const shouldCheckFollow = currentUserId && currentUserId !== userId
-        if (shouldCheckFollow) {
-          followQueries.push(
-            supabase
-              .from("follows")
-              .select("id")
-              .eq("follower_id", currentUserId)
-              .eq("following_id", userId)
-              .maybeSingle()
-              .then(({ data }) => ({ isFollowing: !!data }))
-          )
-        }
 
-        const results = await Promise.all(followQueries)
-        const followerCount = (results[0] as { count: number | null }).count || 0
-        const followingCount = (results[1] as { count: number | null }).count || 0
+        const isFollowingPromise = shouldCheckFollow ?
+          supabase
+            .from('follows')
+            .select('id')
+            .eq('follower_id', currentUserId)
+            .eq('following_id', userId)
+            .maybeSingle()
+            .then(({ data }) => !!data)
+          : Promise.resolve(false)
+
+        const [followerCount, followingCount, isFollowingResult] = await Promise.all([
+          followerCountPromise,
+          followingCountPromise,
+          isFollowingPromise,
+        ])
 
         if (shouldCheckFollow) {
-          setIsFollowing((results[2] as { isFollowing: boolean }).isFollowing)
+          setIsFollowing(isFollowingResult)
         }
 
         setProfile({
@@ -92,11 +94,16 @@ export function UserHoverCard({ userId, children, currentUserId }: UserHoverCard
       } catch (error) {
         console.error("Error fetching user profile:", error)
       } finally {
-        setIsLoading(false)
+        if(!isCancelled) {
+          setIsLoading(false)
+        }
       }
     }
 
     fetchUserProfile()
+    return () => {
+      isCancelled = true
+    }
   }, [userId, currentUserId, isOpen])
 
   const handleFollowChange = (newFollowingState: boolean) => {
@@ -143,9 +150,9 @@ export function UserHoverCard({ userId, children, currentUserId }: UserHoverCard
                   targetUserId={userId}
                   isFollowing={isFollowing}
                   currentUserId={currentUserId}
+                  onFollowChange={handleFollowChange}
                 />
-              )}
-            </div>
+              )}            </div>
 
             {/* User Info */}
             <Link href={`/profile/${profile.username}`} className="block space-y-1 hover:underline">

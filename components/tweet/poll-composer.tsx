@@ -53,7 +53,7 @@ export function PollComposer({ onPollChange, onRemove }: PollComposerProps) {
   const updatePoll = (opts: string[], hours: number) => {
     // Only send poll data if at least 2 options have text
     const filledOptions = opts.filter((opt) => opt.trim().length > 0)
-    console.log("PollComposer updatePoll - options:", opts, "filled:", filledOptions.length)
+    // console.log("PollComposer updatePoll - options:", opts, "filled:", filledOptions.length)
 
     if (filledOptions.length >= 2) {
       const pollData = {

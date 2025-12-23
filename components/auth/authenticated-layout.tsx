@@ -6,7 +6,7 @@ import { useEffect, useState, useMemo } from "react"
 import type { User } from "@supabase/supabase-js"
 import { SidebarProvider } from "@/components/ui/sidebar"
 import { TwitterSidebar } from "@/components/layout/twitter-sidebar"
-import { createClient} from '@/lib/supabase/client'
+import { createClient } from '@/lib/supabase/client'
 
 interface AuthenticatedLayoutProps {
   children: React.ReactNode
@@ -43,7 +43,7 @@ export function AuthenticatedLayout({ children, user: propUser }: AuthenticatedL
     })
 
     return () => subscription.unsubscribe()
-  }, [propUser])
+  }, [propUser, supabase])
 
   if (loading) {
     return (

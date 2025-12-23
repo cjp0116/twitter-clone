@@ -51,23 +51,25 @@ CREATE POLICY "Users can delete tweet_hashtags for their tweets" ON public.tweet
   )
 );
 -- Function to increment hashtag tweet count
-CREATE OR REPLACE FUNCTION increment_hashtag_count() RETURNS TRIGGER AS $$ BEGIN
+CREATE OR REPLACE FUNCTION increment_hashtag_count() RETURNS TRIGGER LANGUAGE plpgsql SECURITY DEFINER
+SET search_path = public AS $ BEGIN
 UPDATE public.hashtags
 SET tweet_count = tweet_count + 1,
   updated_at = NOW()
 WHERE id = NEW.hashtag_id;
 RETURN NEW;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$;
 -- Function to decrement hashtag tweet count
-CREATE OR REPLACE FUNCTION decrement_hashtag_count() RETURNS TRIGGER AS $$ BEGIN
+CREATE OR REPLACE FUNCTION decrement_hashtag_count() RETURNS TRIGGER LANGUAGE plpgsql SECURITY DEFINER
+SET search_path = public AS $ BEGIN
 UPDATE public.hashtags
 SET tweet_count = GREATEST(0, tweet_count - 1),
   updated_at = NOW()
 WHERE id = OLD.hashtag_id;
 RETURN OLD;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$;
 -- Triggers for auto-updating tweet counts
 DROP TRIGGER IF EXISTS trigger_increment_hashtag_count ON public.tweet_hashtags;
 CREATE TRIGGER trigger_increment_hashtag_count

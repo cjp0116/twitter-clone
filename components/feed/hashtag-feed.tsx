@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, useMemo } from "react"
+import { useEffect, useState, useMemo, useCallback } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { TweetCard } from "@/components/tweet/tweet-card"
 import { Loader2 } from "lucide-react"
@@ -36,68 +36,66 @@ export function HashtagFeed({ tag, currentUserId }: HashtagFeedProps) {
 
   const supabase = useMemo(() => createClient(), [])
 
-  useEffect(() => {
-    const fetchTweets = async () => {
-      setIsLoading(true)
-      setError(null)
+  const fetchTweets = useCallback(async () => {
+    setIsLoading(true)
+    setError(null)
 
-      try {
-        // First, get the hashtag ID
-        const { data: hashtagData, error: hashtagError } = await supabase
-          .from("hashtags")
-          .select("id")
-          .eq("tag", tag)
-          .single()
+    try {
+      // First, get the hashtag ID
+      const { data: hashtagData, error: hashtagError } = await supabase
+        .from("hashtags")
+        .select("id")
+        .eq("tag", tag)
+        .single()
 
-        if (hashtagError || !hashtagData) {
-          setTweets([])
-          setIsLoading(false)
-          return
-        }
-
-        // Get tweet IDs that have this hashtag
-        const { data: tweetHashtags, error: tweetHashtagsError } = await supabase
-          .from("tweet_hashtags")
-          .select("tweet_id")
-          .eq("hashtag_id", hashtagData.id)
-
-        if (tweetHashtagsError) throw tweetHashtagsError
-
-        if (!tweetHashtags || tweetHashtags.length === 0) {
-          setTweets([])
-          setIsLoading(false)
-          return
-        }
-
-        const tweetIds = tweetHashtags.map((th) => th.tweet_id)
-
-        // Fetch the actual tweets
-        const { data: tweetsData, error: tweetsError } = await supabase
-          .from("tweets")
-          .select(
-            `
-            *,
-            profiles (
-              username,
-              display_name,
-              avatar_url
-            )
-          `
-          )
-          .in("id", tweetIds)
-          .order("created_at", { ascending: false })
-
-        if (tweetsError) throw tweetsError
-
-        setTweets(tweetsData || [])
-      } catch (err) {
-        console.error("Error fetching hashtag tweets:", err)
-        setError("Failed to load tweets")
-      } finally {
-        setIsLoading(false)
+      if (hashtagError || !hashtagData) {
+        setTweets([])
+        return
       }
-    }
 
+      // Get tweet IDs that have this hashtag
+      const { data: tweetHashtags, error: tweetHashtagsError } = await supabase
+        .from("tweet_hashtags")
+        .select("tweet_id")
+        .eq("hashtag_id", hashtagData.id)
+
+      if (tweetHashtagsError) throw tweetHashtagsError
+
+      if (!tweetHashtags || tweetHashtags.length === 0) {
+        setTweets([])
+        return
+      }
+
+      const tweetIds = tweetHashtags.map((th) => th.tweet_id)
+
+      // Fetch the actual tweets
+      const { data: tweetsData, error: tweetsError } = await supabase
+        .from("tweets")
+        .select(
+          `
+          *,
+          profiles (
+            username,
+            display_name,
+            avatar_url
+          )
+        `
+        )
+        .in("id", tweetIds)
+        .order("created_at", { ascending: false })
+
+      if (tweetsError) throw tweetsError
+
+      setTweets(tweetsData || [])
+    } catch (err) {
+      console.error("Error fetching hashtag tweets:", err)
+      setError("Failed to load tweets")
+    } finally {
+      setIsLoading(false)
+    }
+  }, [supabase, tag])
+
+  useEffect(() => {
     fetchTweets()
 
     // Subscribe to new tweets with this hashtag
@@ -119,57 +117,9 @@ export function HashtagFeed({ tag, currentUserId }: HashtagFeedProps) {
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [tag, supabase])
+  }, [tag, supabase, fetchTweets])
 
   const handleUpdate = () => {
-    // Refetch tweets when one is updated/deleted
-    const fetchTweets = async () => {
-      const { data: hashtagData } = await supabase
-        .from("hashtags")
-        .select("id")
-        .eq("tag", tag)
-        .single()
-
-      if (!hashtagData) return
-
-      const { data: tweetHashtags } = await supabase
-        .from("tweet_hashtags")
-        .select("tweet_id")
-        .eq("hashtag_id", hashtagData.id)
-
-      if (!tweetHashtags || tweetHashtags.length === 0) {
-        setTweets([])
-        setIsLoading(false)
-        return
-      }
-
-      const tweetIds = tweetHashtags.map((th) => th.tweet_id)
-
-      const { data: tweetsData, error: tweetsError } = await supabase
-        .from("tweets")
-        .select(
-          `
-          *,
-          profiles (
-            username,
-            display_name,
-            avatar_url
-          )
-        `
-        )
-        .in("id", tweetIds)
-        .order("created_at", { ascending: false })
-
-      if (tweetsError) {
-        console.error("Error fetching tweets:", tweetsError)
-        setTweets([])
-        setIsLoading(false)
-        return
-      }
-
-      setTweets(tweetsData || [])
-    }
-
     fetchTweets()
   }
 

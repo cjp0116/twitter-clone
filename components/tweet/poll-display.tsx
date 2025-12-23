@@ -76,6 +76,15 @@ export function PollDisplay({ tweetId, currentUserId }: PollDisplayProps) {
     }
   }, [poll?.id])
 
+  const resetPollState = () => {
+    setPoll(null)
+    setOptions([])
+    setUserVote(null)
+    setTotalVotes(0)
+    setHasEnded(false)
+    setIsVoting(false)
+  }
+
   const fetchPollData = async () => {
     try {
       // Fetch poll - use maybeSingle() to avoid errors when no poll exists
@@ -87,19 +96,13 @@ export function PollDisplay({ tweetId, currentUserId }: PollDisplayProps) {
 
       if (pollError) {
         console.error("Error fetching poll for tweet", tweetId, ":", pollError)
-        setPoll(null)
-        setOptions([])
-        setUserVote(null)
-        setTotalVotes(0)
+        resetPollState()
         return
       }
 
       if (!pollData) {
         // console.log("No poll found for tweet:", tweetId)
-        setPoll(null)
-        setOptions([])
-        setUserVote(null)
-        setTotalVotes(0)
+        resetPollState()
         return
       }
       // console.log("Poll found for tweet", tweetId, ":", pollData)
@@ -113,7 +116,12 @@ export function PollDisplay({ tweetId, currentUserId }: PollDisplayProps) {
         .eq("poll_id", pollData.id)
         .order("position", { ascending: true })
 
-      if (optionsError) throw optionsError
+      if (optionsError) {
+        console.error("Error fetching poll options:", optionsError)
+        setOptions([])
+        setTotalVotes(0)
+        return
+      }
 
       setOptions(optionsData || [])
 
