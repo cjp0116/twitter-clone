@@ -39,7 +39,7 @@ export function UserHoverCard({ userId, children, currentUserId }: UserHoverCard
       const supabase = createClient()
 
       try {
-        // Fetch user profile
+        // Fetch user profile first (required for other data to matter)
         const { data: profileData, error: profileError } = await supabase
           .from("profiles")
           .select("id, username, display_name, avatar_url, bio")
@@ -48,34 +48,46 @@ export function UserHoverCard({ userId, children, currentUserId }: UserHoverCard
 
         if (profileError) throw profileError
 
-        // Fetch follower count
-        const { count: followerCount } = await supabase
-          .from("follows")
-          .select("*", { count: "exact", head: true })
-          .eq("following_id", userId)
-
-        // Fetch following count
-        const { count: followingCount } = await supabase
-          .from("follows")
-          .select("*", { count: "exact", head: true })
-          .eq("follower_id", userId)
-
-        // Check if current user is following this user
-        if (currentUserId && currentUserId !== userId) {
-          const { data: followData } = await supabase
+        // Parallelize independent follow-related queries
+        const followQueries: Promise<{ count: number | null } | { isFollowing: boolean }>[] = [
+          supabase
             .from("follows")
-            .select("id")
-            .eq("follower_id", currentUserId)
+            .select("*", { count: "exact", head: true })
             .eq("following_id", userId)
-            .maybeSingle()
+            .then(({ count }) => ({ count })),
+          supabase
+            .from("follows")
+            .select("*", { count: "exact", head: true })
+            .eq("follower_id", userId)
+            .then(({ count }) => ({ count })),
+        ]
 
-          setIsFollowing(!!followData)
+        // Add isFollowing check if applicable
+        const shouldCheckFollow = currentUserId && currentUserId !== userId
+        if (shouldCheckFollow) {
+          followQueries.push(
+            supabase
+              .from("follows")
+              .select("id")
+              .eq("follower_id", currentUserId)
+              .eq("following_id", userId)
+              .maybeSingle()
+              .then(({ data }) => ({ isFollowing: !!data }))
+          )
+        }
+
+        const results = await Promise.all(followQueries)
+        const followerCount = (results[0] as { count: number | null }).count || 0
+        const followingCount = (results[1] as { count: number | null }).count || 0
+
+        if (shouldCheckFollow) {
+          setIsFollowing((results[2] as { isFollowing: boolean }).isFollowing)
         }
 
         setProfile({
           ...profileData,
-          follower_count: followerCount || 0,
-          following_count: followingCount || 0,
+          follower_count: followerCount,
+          following_count: followingCount,
         })
       } catch (error) {
         console.error("Error fetching user profile:", error)
@@ -118,7 +130,7 @@ export function UserHoverCard({ userId, children, currentUserId }: UserHoverCard
           <div className="p-4 space-y-3">
             {/* Avatar and Follow Button */}
             <div className="flex items-start justify-between">
-              <Link href={`/${profile.username}`} className="block">
+              <Link href={`/profile/${profile.username}`} className="block">
                 <Avatar className="h-16 w-16 cursor-pointer hover:opacity-90 transition-opacity">
                   <AvatarImage src={profile.avatar_url || "/placeholder.svg"} />
                   <AvatarFallback className="bg-primary text-primary-foreground text-xl">
@@ -137,7 +149,7 @@ export function UserHoverCard({ userId, children, currentUserId }: UserHoverCard
             </div>
 
             {/* User Info */}
-            <Link href={`/${profile.username}`} className="block space-y-1 hover:underline">
+            <Link href={`/profile/${profile.username}`} className="block space-y-1 hover:underline">
               <div className="font-bold text-base leading-tight">{profile.display_name}</div>
               <div className="text-sm text-muted-foreground">@{profile.username}</div>
             </Link>
@@ -151,11 +163,11 @@ export function UserHoverCard({ userId, children, currentUserId }: UserHoverCard
 
             {/* Stats */}
             <div className="flex gap-4 text-sm">
-              <Link href={`/${profile.username}/following`} className="hover:underline">
+              <Link href={`/profile/${profile.username}/following`} className="hover:underline">
                 <span className="font-bold">{profile.following_count}</span>{" "}
                 <span className="text-muted-foreground">Following</span>
               </Link>
-              <Link href={`/${profile.username}/followers`} className="hover:underline">
+              <Link href={`/profile/${profile.username}/followers`} className="hover:underline">
                 <span className="font-bold">{profile.follower_count}</span>{" "}
                 <span className="text-muted-foreground">Followers</span>
               </Link>
