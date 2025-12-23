@@ -107,10 +107,10 @@ export function EditTweetDialog({ tweet, currentUser, isOpen, onOpenChange, onTw
     }
   }
 
-  const characterCount = content.length
+  const characterCount = content?.length ?? 0
   const isOverLimit = characterCount > 280
-  const isEmpty = !content.trim()
-  const hasChanged = content.trim() !== tweet.content
+  const isEmpty = !content?.trim()
+  const hasChanged = content?.trim() !== tweet.content
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>

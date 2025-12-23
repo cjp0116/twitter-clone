@@ -241,16 +241,6 @@ export function TweetCard({ tweet, currentUserId, currentUser, onUpdate }: Tweet
                     @{tweet.profiles.username}
                   </Link>
                 </UserHoverCard>
-                <UserHoverCard userId={tweet.author_id} currentUserId={currentUserId}>
-                  <Link href={`/profile/${tweet.profiles.username}`} className="hover:underline">
-                    <span className="font-semibold text-foreground">{tweet.profiles.display_name}</span>
-                  </Link>
-                </UserHoverCard>
-                <UserHoverCard userId={tweet.author_id} currentUserId={currentUserId}>
-                  <Link href={`/profile/${tweet.profiles.username}`} className="text-muted-foreground hover:underline">
-                    @{tweet.profiles.username}
-                  </Link>
-                </UserHoverCard>
                 <span className="text-muted-foreground">·</span>
                 <span className="text-muted-foreground text-sm">
                   {formatDistanceToNow(new Date(tweet.created_at), { addSuffix: true })}
